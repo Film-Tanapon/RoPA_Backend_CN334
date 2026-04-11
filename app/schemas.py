@@ -9,6 +9,7 @@ class User(BaseModel):
     tel: str
     role: str
     departments: str
+    status: str
 
 class RoPARecord(BaseModel):
     activity_name: str
@@ -32,6 +33,7 @@ class RoPARecord(BaseModel):
     consent_exempt_basis: str
     right_rejection_reason: str
     risk_level: str
+    status: str
     create_by: int
 
 class Transfer(BaseModel):
@@ -54,3 +56,8 @@ class AuditLog(BaseModel):
     table_name: str
     old_value: Optional[Dict[str, Any]] = None
     new_value: Optional[Dict[str, Any]] = None
+
+class Feedback(BaseModel):
+    ropa_id: int
+    detail: str
+    create_by: int

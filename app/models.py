@@ -13,6 +13,7 @@ class User(Base):
     tel = Column(String)
     role = Column(String)
     departments = Column(String)
+    status = Column(String)
     create_date = Column(DateTime(timezone=True), server_default=func.now())
     last_active = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -41,6 +42,7 @@ class RoPARecord(Base):
     consent_exempt_basis = Column(String)
     right_rejection_reason = Column(String)
     risk_level = Column(String)
+    status = Column(String)
     create_by = Column(Integer, ForeignKey("users.id"))
 
 class Transfer(Base):
@@ -73,3 +75,12 @@ class AuditLog(Base):
     old_value = Column(JSON)
     new_value = Column(JSON)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+class Feedback(Base):
+    __tablename__ = "feedback"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ropa_id = Column(Integer, ForeignKey("ropa_record.id"))
+    detail = Column(String)
+    create_by = Column(Integer, ForeignKey("users.id"))
+    create_date = Column(DateTime(timezone=True), server_default=func.now())

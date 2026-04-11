@@ -65,7 +65,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     except JWTError: # --- แก้ไขการเรียก Error ตรงนี้ ---
         raise HTTPException(status_code=401, detail="Incorrect Token")
 
-#===========================================Login & Sign-up=========================================================#
+#===========================================Login=========================================================#
 @app.post("/login")
 async def login(user_data: LoginRequest,
                 db: Session = Depends(get_db)):
@@ -90,16 +90,15 @@ async def login(user_data: LoginRequest,
         "access_token": token, 
         "token_type": "bearer"
     }
-    
-@app.post("/signup")
-async def create_user(signup_data: schemas.User,
-                      db: Session = Depends(get_db)):
-    print(f"Recieved data: {signup_data}")
-    saved_data = crud.create_user(db=db, user=signup_data)
-    return {"status": "success", "message": "Sign-up data received", "data": saved_data}
-
 
 #===========================================Users=========================================================#
+@app.post("/user")
+async def create_user(user_data: schemas.User,
+                      db: Session = Depends(get_db)):
+    print(f"Recieved data: {user_data}")
+    saved_data = crud.create_user(db=db, user=user_data)
+    return {"status": "success", "message": "Sign-up data received", "data": saved_data}
+
 @app.get("/users")
 async def read_users(
     skip: int = 0, 
@@ -144,20 +143,36 @@ async def read_user(user_id: int,
 @app.put("/users/{user_id}")
 async def user_update(user_id: int,
                       user_update: schemas.User,
+                      current_username: str = Depends(get_current_user),
                       db: Session = Depends(get_db)):
-    update_data = crud.update_user(db,user_id, user_update)
-    if update_data is None:
+    user = crud.get_user_by_username(db, username=current_username)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    db_user_old = crud.get_user_by_id(db, user_id)
+    if not db_user_old:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    update_data = crud.update_user(db,user_id, user_update)
+
+    crud.log_action(db, user.id, "UPDATE", "users", user_id, old_model=db_user_old, new_model=update_data)
 
     return {"status": "success", "message": "RoPA record data updated", "data": update_data}
 
 
 @app.delete("/users/{user_id}")
 async def delete_user(user_id: int,
+                      current_username: str = Depends(get_current_user),
                       db: Session = Depends(get_db)):
+    user = crud.get_user_by_username(db, username=current_username)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
     db_user = crud.delete_user(db, user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    crud.log_action(db, user.id, "DELETE", "users", user_id, old_model=user)
     
     return {
         "status": "success",
@@ -422,3 +437,40 @@ async def create_log(log_data: schemas.AuditLog,
     print(f"Recieved data: {log_data}")
     saved_data = crud.create_log(db, log_data)
     return {"status": "success", "message": "log data received", "data": saved_data}
+
+#===========================================Feedback=========================================================#
+
+@app.get("/feedbacks/{ropa_id}")
+async def read_feedback_by_ropa_id(ropa_id: int,
+                               db: Session = Depends(get_db)):
+    feedbacks = crud.get_feedback_by_ropa_id(db, ropa_id)
+    if feedbacks is None:
+        raise HTTPException(status_code=404, detail="Ropa record not found")
+        
+    return {
+        "status": "success",
+        "data": feedbacks
+    }
+
+@app.post("/feedback")
+async def create_feedback(feedback_data: schemas.Feedback,
+                     db : Session = Depends(get_db)):
+    print(f"Recieved data: {feedback_data}")
+    saved_data = crud.create_feedback(db, feedback_data)
+    return {"status": "success", "message": "log data received", "data": saved_data}
+
+@app.delete("/feedback")
+async def delete_feedback(feedback_id: int,
+                      db: Session = Depends(get_db)):
+    db_feedback = crud.delete_user(db, feedback_id)
+    if db_feedback is None:
+        raise HTTPException(status_code=404, detail="Feedback not found")
+    
+    return {
+        "status": "success",
+        "data": db_feedback
+    }
+
+
+
+
