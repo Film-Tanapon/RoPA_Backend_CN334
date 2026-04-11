@@ -78,7 +78,7 @@ async def login(user_data: LoginRequest,
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    expire = datetime.now(timezone.utc) + timedelta(minutes = 5)
+    expire = datetime.now(timezone.utc) + timedelta(minutes = 30)
     payload = {
         "sub": user_data.username,
         "exp": expire
