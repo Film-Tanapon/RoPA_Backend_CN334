@@ -153,7 +153,12 @@ async def user_update(user_id: int,
     if not db_user_old:
         raise HTTPException(status_code=404, detail="User not found")
     
+    db_user_old["create_date"] = db_user_old["create_date"].isoformat()
+    db_user_old["last_active"] = db_user_old["last_active"].isoformat()
+    
     update_data = crud.update_user(db,user_id, user_update)
+    update_data["create_date"] = update_data["create_date"].isoformat()
+    update_data["last_active"] = update_data["last_active"].isoformat()
 
     crud.log_action(db, user.id, "UPDATE", "users", user_id, old_model=db_user_old, new_model=update_data)
 
@@ -169,10 +174,13 @@ async def delete_user(user_id: int,
         raise HTTPException(status_code=401, detail="User not found")
 
     db_user = crud.delete_user(db, user_id)
+    db_user["create_date"] = db_user["create_date"].isoformat()
+    db_user["last_active"] = db_user["last_active"].isoformat()
+    
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     
-    crud.log_action(db, user.id, "DELETE", "users", user_id, old_model=user)
+    crud.log_action(db, user.id, "DELETE", "users", user_id, old_model=db_user)
     
     return {
         "status": "success",
