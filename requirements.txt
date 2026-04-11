@@ -1,0 +1,11 @@
+fastapi
+argon2_cffi
+uvicorn
+pandas
+python-multipart
+sqlalchemy
+databases[sqlite]
+pydantic
+python-jose[cryptography]
+passlib[bcrypt]
+fastapi-cors
