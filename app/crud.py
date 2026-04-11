@@ -190,6 +190,10 @@ def log_action(
     def model_to_dict(model):
         if not model:
             return None
+        
+        if isinstance(model, dict):
+            return model
+    
         return {column.name: getattr(model, column.name) for column in model.__table__.columns}
 
     old_value = model_to_dict(old_model)
