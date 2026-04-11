@@ -1,10 +1,12 @@
 from fastapi import FastAPI, HTTPException, status, Depends
+from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from jose import jwt, JWTError, ExpiredSignatureError 
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
+
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -153,12 +155,11 @@ async def user_update(user_id: int,
     if not db_user_old:
         raise HTTPException(status_code=404, detail="User not found")
     
-    db_user_old["create_date"] = db_user_old["create_date"].isoformat()
-    db_user_old["last_active"] = db_user_old["last_active"].isoformat()
+    db_user_old = jsonable_encoder(db_user_old) if db_user_old else None
     
     update_data = crud.update_user(db,user_id, user_update)
-    update_data["create_date"] = update_data["create_date"].isoformat()
-    update_data["last_active"] = update_data["last_active"].isoformat()
+    update_data = jsonable_encoder(update_data) if update_data else None
+
 
     crud.log_action(db, user.id, "UPDATE", "users", user_id, old_model=db_user_old, new_model=update_data)
 
@@ -174,9 +175,8 @@ async def delete_user(user_id: int,
         raise HTTPException(status_code=401, detail="User not found")
 
     db_user = crud.delete_user(db, user_id)
-    db_user["create_date"] = db_user["create_date"].isoformat()
-    db_user["last_active"] = db_user["last_active"].isoformat()
-    
+    db_user = jsonable_encoder(db_user) if db_user else None
+
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     
