@@ -1,0 +1,213 @@
+from sqlalchemy.orm import Session
+from app import models, schemas
+from app.security import get_password_hash
+
+#========================================================Users===========================================================#
+def create_user(db: Session, user: schemas.User):
+    password = get_password_hash(user.password_hash)
+
+    db_user = models.User(
+    username = user.username,
+    email=user.email,
+    password_hash = password,
+    fullname=user.fullname,
+    tel=user.tel,
+    role=user.role,
+    departments=user.departments
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+def get_users(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.User).offset(skip).limit(limit).all()
+
+def get_user_by_username(db: Session, username: str):
+    return db.query(models.User).filter(models.User.username == username).first()
+
+def get_user_by_id(db: Session, user_id: int):
+    return db.query(models.User).filter(models.User.id == user_id).first()
+
+def update_user(db: Session, user_id: int, user_update: schemas.User):
+    db_user = get_user_by_id(db, user_id)
+    if not db_user:
+        return None
+    
+    update_data = user_update.dict(exclude_unset=True) 
+    
+    if "password_hash" in update_data:
+        hashed_pw = get_password_hash(update_data.pop("password_hash"))
+        update_data["password_hash"] = hashed_pw
+
+    for key, value in update_data.items():
+        setattr(db_user, key, value)
+
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+def delete_user(db: Session, user_id: int):
+    db_user = get_user_by_id(db, user_id)
+    if db_user:
+        db.delete(db_user)
+        db.commit()
+    return db_user
+
+#========================================================RoPA Record===========================================================#
+def create_ropa_record(db: Session, ropa: schemas.RoPARecord):
+    db_ropa = models.RoPARecord(**ropa.dict())
+    db.add(db_ropa)
+    db.commit()
+    db.refresh(db_ropa)
+    return db_ropa
+
+def get_ropa_records(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.RoPARecord).offset(skip).limit(limit).all()
+
+def get_ropa_record_by_id(db: Session, record_id: int):
+    return db.query(models.RoPARecord).filter(models.RoPARecord.id == record_id).first()
+
+def get_ropa_records_by_user(db: Session, user_id: int, skip: int = 0, limit: int = 100):
+    return db.query(models.RoPARecord).filter(models.RoPARecord.create_by == user_id).offset(skip).limit(limit).all()
+
+def update_ropa_record(db: Session, record_id: int, ropa_update: schemas.RoPARecord):
+    db_ropa = get_ropa_record_by_id(db, record_id)
+    if not db_ropa:
+        return None
+
+    update_data = ropa_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_ropa, key, value)
+
+    db.commit()
+    db.refresh(db_ropa)
+    return db_ropa
+
+def delete_ropa_record(db: Session, record_id: int):
+    db_ropa = get_ropa_record_by_id(db, record_id)
+    if db_ropa:
+        db.delete(db_ropa)
+        db.commit()
+    return db_ropa
+
+#========================================================Transfers===========================================================#
+
+def get_transfer_by_id(db: Session, transfer_id: int):
+    return db.query(models.Transfer).filter(models.Transfer.id == transfer_id).first()
+
+def get_transfer_by_ropa_id(db: Session, ropa_id: int):
+    return db.query(models.Transfer).filter(models.Transfer.ropa_id == ropa_id).first()
+
+def create_transfer(db: Session, transfer: schemas.Transfer):
+    db_tranfer = models.Transfer(**transfer.dict())
+    db.add(db_tranfer)
+    db.commit()
+    db.refresh(db_tranfer)
+    return db_tranfer
+
+def update_transfer(db: Session, transfer_id: int, transfer_update: schemas.Transfer):
+    db_transfer = get_transfer_by_id(db, transfer_id)
+    if not db_transfer:
+        return None
+
+    update_data = transfer_update.dict(exclude_unset=True)
+
+    for key, value in update_data.items():
+        setattr(db_transfer, key, value)
+
+    db.commit()
+    db.refresh(db_transfer)
+    return db_transfer
+
+def delete_transfer(db: Session, transfer_id: int):
+    db_transfer = get_transfer_by_id(db, transfer_id)
+    if db_transfer:
+        db.delete(db_transfer)
+        db.commit()
+    return db_transfer
+
+#========================================================Security Measure===========================================================#
+
+def get_security_by_id(db: Session, security_id: int):
+    return db.query(models.SecurityMeasure).filter(models.SecurityMeasure.id == security_id).first()
+
+def get_security_by_ropa_id(db: Session, ropa_id: int):
+    return db.query(models.SecurityMeasure).filter(models.SecurityMeasure.ropa_id == ropa_id).all()
+
+def create_security(db: Session, security: schemas.SecurityMeasure):
+    db_security = models.SecurityMeasure(**security.dict())
+    db.add(db_security)
+    db.commit()
+    db.refresh(db_security)
+    return db_security
+
+def update_security(db: Session, security_id: int, security_update: schemas.SecurityMeasure):
+    db_security = get_security_by_id(db, security_id)
+    if not db_security:
+        return None
+
+    update_data = security_update.dict(exclude_unset=True)
+
+    for key, value in update_data.items():
+        setattr(db_security, key, value)
+
+    db.commit()
+    db.refresh(db_security)
+    return db_security
+
+def delete_security(db: Session, security_id: int):
+    db_security = get_security_by_id(db, security_id)
+    if db_security:
+        db.delete(db_security)
+        db.commit()
+    return db_security
+
+#========================================================Audit Log===========================================================#
+def get_logs(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.AuditLog).offset(skip).limit(limit).all()
+
+def get_logs_by_ropa_id(db: Session, ropa_id: int):
+    return db.query(models.AuditLog).filter(models.AuditLog.ropa_id == ropa_id).all()
+
+def create_log(db: Session, log: schemas.AuditLog):
+    db_log = models.AuditLog(**log.dict())
+    db.add(db_log)
+    db.commit()
+    db.refresh(db_log)
+    return db_log
+
+def log_action(
+    db: Session, 
+    user_id: int, 
+    action: str, 
+    table_name: str, 
+    ropa_id: int, 
+    old_model=None, 
+    new_model=None
+):
+    def model_to_dict(model):
+        if not model:
+            return None
+        return {column.name: getattr(model, column.name) for column in model.__table__.columns}
+
+    old_value = model_to_dict(old_model)
+    new_value = model_to_dict(new_model)
+
+    log_data = schemas.AuditLog(
+        user_id=user_id,
+        record_id=ropa_id,
+        action=action,
+        table_name=table_name,
+        old_value=old_value,
+        new_value=new_value
+    )
+    
+    db_log = models.AuditLog(**log_data.dict())
+    db.add(db_log)
+    db.commit()
+    db.refresh(db_log)
+    
+    return db_log
+
+
