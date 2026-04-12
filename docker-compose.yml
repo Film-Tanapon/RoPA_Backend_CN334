@@ -5,3 +5,5 @@ services:
       - "3340:8000"
     volumes:
       - .:/app
+    env_file:
+      - .env
