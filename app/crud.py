@@ -72,7 +72,7 @@ def get_ropa_record_by_id(db: Session, record_id: int):
 def get_ropa_records_by_user(db: Session, user_id: int, skip: int = 0, limit: int = 100):
     return db.query(models.RoPARecord).filter(models.RoPARecord.create_by == user_id).offset(skip).limit(limit).all()
 
-def update_ropa_record(db: Session, record_id: int, ropa_update: schemas.RoPARecord):
+def update_ropa_record(db: Session, record_id: int, ropa_update: schemas.RoPARecordUpdate):
     db_ropa = get_ropa_record_by_id(db, record_id)
     if not db_ropa:
         return None
@@ -107,7 +107,7 @@ def create_transfer(db: Session, transfer: schemas.Transfer):
     db.refresh(db_tranfer)
     return db_tranfer
 
-def update_transfer(db: Session, transfer_id: int, transfer_update: schemas.Transfer):
+def update_transfer(db: Session, transfer_id: int, transfer_update: schemas.TransferUpdate):
     db_transfer = get_transfer_by_id(db, transfer_id)
     if not db_transfer:
         return None
@@ -143,7 +143,7 @@ def create_security(db: Session, security: schemas.SecurityMeasure):
     db.refresh(db_security)
     return db_security
 
-def update_security(db: Session, security_id: int, security_update: schemas.SecurityMeasure):
+def update_security(db: Session, security_id: int, security_update: schemas.SecurityMeasureUpdate):
     db_security = get_security_by_id(db, security_id)
     if not db_security:
         return None

@@ -244,7 +244,7 @@ async def create_ropa_record(ropa_data: schemas.RoPARecord,
 
 @app.put("/ropa-records/{record_id}")
 async def update_ropa_record(record_id: int, 
-                            ropa_update: schemas.RoPARecord, 
+                            ropa_update: schemas.RoPARecordUpdate, 
                             current_username: str = Depends(get_current_user), 
                             db: Session = Depends(get_db)
                             ):
@@ -311,7 +311,7 @@ async def create_transfer(transfer_data: schemas.Transfer,
 
 @app.put("/transfers/{transfer_id}")
 async def update_transfer(transfer_id: int, 
-                        transfer_update: schemas.Transfer, 
+                        transfer_update: schemas.TransferUpdate, 
                         current_username: str = Depends(get_current_user), 
                         db: Session = Depends(get_db)
                         ):
@@ -378,7 +378,7 @@ async def create_security(security_data: schemas.SecurityMeasure,
 
 @app.put("/security/{security_id}")
 async def update_security(security_id: int,
-                          security_update: schemas.SecurityMeasure,
+                          security_update: schemas.SecurityMeasureUpdate,
                           current_username: str = Depends(get_current_user),
                           db: Session = Depends(get_db)):
     user = crud.get_user_by_username(db, username=current_username)
