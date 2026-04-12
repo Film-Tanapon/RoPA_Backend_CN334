@@ -61,3 +61,13 @@ class Feedback(BaseModel):
     ropa_id: int
     detail: str
     create_by: int
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
+    password_hash: Optional[str] = None  
+    fullname: Optional[str] = None
+    tel: Optional[str] = None
+    role: Optional[str] = None
+    departments: Optional[str] = None
+    status: Optional[str] = None

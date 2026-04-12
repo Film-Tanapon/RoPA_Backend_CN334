@@ -144,7 +144,7 @@ async def read_user(user_id: int,
 
 @app.put("/users/{user_id}")
 async def user_update(user_id: int,
-                      user_update: schemas.User,
+                      user_update: schemas.UserUpdate,
                       current_username: str = Depends(get_current_user),
                       db: Session = Depends(get_db)):
     user = crud.get_user_by_username(db, username=current_username)
