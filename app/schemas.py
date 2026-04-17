@@ -96,7 +96,7 @@ class SecurityMeasureUpdate(BaseModel):
 
 class AuditLog(BaseModel):
     user_id: int
-    record_id: int
+    record_id: Optional[int] = None
     action: str
     table_name: str
     old_value: Optional[Dict[str, Any]] = None
