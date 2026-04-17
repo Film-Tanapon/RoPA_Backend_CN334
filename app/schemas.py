@@ -28,6 +28,7 @@ class RoPARecord(BaseModel):
     data_subject: str
     data_category: str
     is_sensitive: bool = False
+    personal_info: str
     collection_method: str
     source: str
     legal_basis: str
@@ -44,7 +45,6 @@ class RoPARecord(BaseModel):
     right_rejection_reason: str
     risk_level: str
     status: str
-    create_by: int
 
 class RoPARecordUpdate(BaseModel):
     activity_name: Optional[str] = None
@@ -53,6 +53,7 @@ class RoPARecordUpdate(BaseModel):
     data_subject: Optional[str] = None
     data_category: Optional[str] = None
     is_sensitive: Optional[bool] = None
+    personal_info: Optional[str] = None
     collection_method: Optional[str] = None
     source: Optional[str] = None
     legal_basis: Optional[str] = None

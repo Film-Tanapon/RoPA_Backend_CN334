@@ -27,6 +27,7 @@ class RoPARecord(Base):
     data_subject = Column(String)
     data_category = Column(String)
     is_sensitive = Column(Boolean)
+    personal_info = Column(String)
     collection_method = Column(String)
     source = Column(String)
     legal_basis = Column(String)
@@ -46,7 +47,7 @@ class RoPARecord(Base):
     create_by = Column(Integer, ForeignKey("users.id"))
 
 class Transfer(Base):
-    __tablename__ = "trasfers"
+    __tablename__ = "transfers"
 
     id = Column(Integer, primary_key=True, index=True)
     ropa_id = Column(Integer, ForeignKey("ropa_record.id"))
@@ -80,7 +81,7 @@ class Feedback(Base):
     __tablename__ = "feedback"
 
     id = Column(Integer, primary_key=True, index=True)
-    ropa_id = Column(Integer)
+    ropa_id = Column(Integer, ForeignKey("ropa_record.id"))
     detail = Column(String)
     create_by = Column(Integer, ForeignKey("users.id"))
     create_date = Column(DateTime(timezone=True), server_default=func.now())

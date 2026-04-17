@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app import models, schemas
 from app.security import get_password_hash
+from app.database import SessionLocal
 
 #========================================================Users===========================================================#
 def create_user(db: Session, user: schemas.User):
@@ -56,8 +57,14 @@ def delete_user(db: Session, user_id: int):
     return db_user
 
 #========================================================RoPA Record===========================================================#
-def create_ropa_record(db: Session, ropa: schemas.RoPARecord):
-    db_ropa = models.RoPARecord(**ropa.dict())
+def create_ropa_record(db: Session, ropa: schemas.RoPARecord, user_id: int):
+    record_dict = ropa.dict()
+    
+    db_ropa = models.RoPARecord(
+        **record_dict,
+        create_by=user_id
+    )
+
     db.add(db_ropa)
     db.commit()
     db.refresh(db_ropa)
@@ -87,9 +94,16 @@ def update_ropa_record(db: Session, record_id: int, ropa_update: schemas.RoPARec
 
 def delete_ropa_record(db: Session, record_id: int):
     db_ropa = get_ropa_record_by_id(db, record_id)
-    if db_ropa:
-        db.delete(db_ropa)
-        db.commit()
+    if not db_ropa:
+        return None
+    
+    db.query(models.Transfer).filter(models.Transfer.ropa_id == record_id).delete()
+    db.query(models.SecurityMeasure).filter(models.SecurityMeasure.ropa_id == record_id).delete()
+    db.query(models.Feedback).filter(models.Feedback.ropa_id == record_id).delete()
+
+    db.delete(db_ropa)
+    db.commit()
+
     return db_ropa
 
 #========================================================Transfers===========================================================#
@@ -178,44 +192,47 @@ def create_log(db: Session, log: schemas.AuditLog):
     db.refresh(db_log)
     return db_log
 
-def log_action(
-    db: Session, 
+def log_action_background(
     user_id: int, 
     action: str, 
     table_name: str, 
-    ropa_id: int, 
+    record_id: int, 
     old_model=None, 
     new_model=None
 ):
-    def model_to_dict(model):
-        if not model:
-            return None
+    db = SessionLocal()
+    try:
+        def model_to_dict(model):
+            if not model:
+                return None
+            if isinstance(model, dict):
+                return model
+            return {column.name: getattr(model, column.name) for column in model.__table__.columns}
+
+        old_value = model_to_dict(old_model)
+        new_value = model_to_dict(new_model)
+
+        log_data = schemas.AuditLog(
+            user_id=user_id,
+            record_id=record_id,
+            action=action,
+            table_name=table_name,
+            old_value=old_value,
+            new_value=new_value
+        )
         
-        if isinstance(model, dict):
-            return model
-    
-        return {column.name: getattr(model, column.name) for column in model.__table__.columns}
-
-    old_value = model_to_dict(old_model)
-    new_value = model_to_dict(new_model)
-
-    log_data = schemas.AuditLog(
-        user_id=user_id,
-        record_id=ropa_id,
-        action=action,
-        table_name=table_name,
-        old_value=old_value,
-        new_value=new_value
-    )
-    
-    db_log = models.AuditLog(**log_data.dict())
-    db.add(db_log)
-    db.commit()
-    db.refresh(db_log)
-    
-    return db_log
+        db_log = models.AuditLog(**log_data.dict())
+        db.add(db_log)
+        db.commit()
+    except Exception as e:
+        print(f"Background Log Error: {e}")
+    finally:
+        db.close()
 
 #========================================================Feedback===========================================================#
+
+def get_feedback_by_id(db: Session, feedback_id: int):
+    return db.query(models.Feedback).filter(models.Feedback.id == feedback_id).first()
 
 def get_feedback_by_ropa_id(db: Session, ropa_id: int):
     return db.query(models.Feedback).filter(models.Feedback.ropa_id == ropa_id).all()
@@ -228,7 +245,7 @@ def create_feedback(db: Session, log: schemas.Feedback):
     return db_feedback
 
 def delete_feedback(db: Session, feedback_id: int):
-    db_feedback = get_security_by_id(db, feedback_id)
+    db_feedback = get_feedback_by_id(db, feedback_id)
     if db_feedback:
         db.delete(db_feedback)
         db.commit()

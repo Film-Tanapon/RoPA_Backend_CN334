@@ -1,49 +1,41 @@
-from fastapi import FastAPI, HTTPException, status, Depends
-from fastapi.encoders import jsonable_encoder
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import FastAPI, HTTPException, status, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
-from jose import jwt, JWTError, ExpiredSignatureError 
-from passlib.context import CryptContext
-from datetime import datetime, timedelta, timezone
-
-
-from sqlalchemy import func
 from sqlalchemy.orm import Session
+from datetime import datetime, timedelta, timezone
+from jose import jwt, JWTError
+
 from app import models, schemas, crud
 from app.database import engine, SessionLocal
+from app.security import pwd_context
 
-from app.schemas import User
-
+# สร้างตารางใน Database (ถ้ายังไม่มี)
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+app = FastAPI(title="RoPA Management API")
 
+# --- CORS Configuration ---
 origins = [
     "http://localhost:3000",
-    "http://localhost:5500", 
+    "http://localhost:5500",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, 
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# --- Security Configuration ---
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
-
-SECRET_KEY = "my_super_secret_key" 
+SECRET_KEY = "my_super_secret_key"  # แนะนำให้ใช้ os.getenv("SECRET_KEY") ในภายหลัง
 ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
-
+# --- Dependency ---
 def get_db():
     db = SessionLocal()
     try:
@@ -51,434 +43,218 @@ def get_db():
     finally:
         db.close()
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
+# --- Schemas สำหรับ Auth ---
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+# --- Authentication Helpers ---
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=15))
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
-        
         if username is None:
-            raise HTTPException(status_code=401, detail="Incorrect Token")
-            
+            raise HTTPException(status_code=401, detail="Invalid token")
         return username
-        
-    except ExpiredSignatureError: # --- แก้ไขการเรียก Error ตรงนี้ ---
-        raise HTTPException(status_code=401, detail="Token expired. Please re-login.")
-        
-    except JWTError: # --- แก้ไขการเรียก Error ตรงนี้ ---
-        raise HTTPException(status_code=401, detail="Incorrect Token")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Could not validate credentials")
 
-#===========================================Login=========================================================#
+# ===========================================================================
+#                                AUTH ENDPOINTS
+# ===========================================================================
+
 @app.post("/login")
-async def login(user_data: LoginRequest,
-                db: Session = Depends(get_db)):
-    user = crud.get_user_by_username(db, username=user_data.username)
-
-    if not user or not pwd_context.verify(user_data.password, user.password_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Username or Password Incorrect",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    expire = datetime.now(timezone.utc) + timedelta(minutes = 30)
-    payload = {
-        "sub": user_data.username,
-        "exp": expire
-    }
-    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
+    user = crud.get_user_by_username(db, username=login_data.username)
+    if not user or not pwd_context.verify(login_data.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง")
     
-    return {
-        "message": "Login Success",
-        "access_token": token, 
-        "token_type": "bearer"
-    }
+    access_token = create_access_token(
+        data={"sub": user.username}, 
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    return {"access_token": access_token, "token_type": "bearer", "role": user.role}
 
-#===========================================Users=========================================================#
-@app.post("/user")
-async def create_user(user_data: schemas.User,
-                      db: Session = Depends(get_db)):
-    print(f"Recieved data: {user_data}")
-    saved_data = crud.create_user(db=db, user=user_data)
-    return {"status": "success", "message": "Sign-up data received", "data": saved_data}
+# ===========================================================================
+#                                USER ENDPOINTS
+# ===========================================================================
+
+@app.post("/users", response_model=schemas.User)
+async def create_user(user: schemas.User, db: Session = Depends(get_db)):
+    return crud.create_user(db=db, user=user)
 
 @app.get("/users")
-async def read_users(
-    skip: int = 0, 
-    limit: int = 100, 
-    db: Session = Depends(get_db)):
+async def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     users = crud.get_users(db, skip=skip, limit=limit)
-    return {
-        "status": "success",
-        "data": users
-    }
-
-@app.get("/users/me")
-async def read_users_me(current_username: str = Depends(get_current_user),
-                        db: Session = Depends(get_db)):
-    user = crud.get_user_by_username(db, username=current_username)
-    if user is None:
-        raise HTTPException(status_code=404, detail="No User data")
-    
-    user.last_active = func.now()
-
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    
-    return {
-        "status": "success",
-        "data": user
-    }
-
-@app.get("/users/{user_id}")
-async def read_user(user_id: int,
-                    db: Session = Depends(get_db)):
-    db_user = crud.get_user_by_id(db, user_id=user_id)
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-        
-    return {
-        "status": "success",
-        "data": db_user
-    }
+    return users
 
 @app.put("/users/{user_id}")
-async def user_update(user_id: int,
-                      user_update: schemas.UserUpdate,
-                      current_username: str = Depends(get_current_user),
-                      db: Session = Depends(get_db)):
-    user = crud.get_user_by_username(db, username=current_username)
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    
-    db_user_old = crud.get_user_by_id(db, user_id)
-    if not db_user_old:
+async def update_user(
+    user_id: int, 
+    user_update: schemas.UserUpdate, 
+    background_tasks: BackgroundTasks,
+    current_username: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    admin = crud.get_user_by_username(db, current_username)
+    db_user = crud.get_user_by_id(db, user_id)
+    if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    old_data = {column.name: getattr(db_user, column.name) for column in db_user.__table__.columns}
+    updated_user = crud.update_user(db, user_id, user_update)
     
-    db_user_old = jsonable_encoder(db_user_old) if db_user_old else None
-    
-    update_data = crud.update_user(db,user_id, user_update)
-    update_data = jsonable_encoder(update_data) if update_data else None
-
-
-    crud.log_action(db, user.id, "UPDATE", "users", None, old_model=db_user_old, new_model=update_data)
-
-    return {"status": "success", "message": "RoPA record data updated", "data": update_data}
-
+    # บันทึก Log แบบ Background Task
+    background_tasks.add_task(
+        crud.log_action_background,
+        user_id=admin.id,
+        action="UPDATE",
+        table_name="users",
+        record_id=user_id,
+        old_model=old_data,
+        new_model=user_update.dict(exclude_unset=True)
+    )
+    return updated_user
 
 @app.delete("/users/{user_id}")
-async def delete_user(user_id: int,
-                      current_username: str = Depends(get_current_user),
-                      db: Session = Depends(get_db)):
-    user = crud.get_user_by_username(db, username=current_username)
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-
+async def delete_user(
+    user_id: int, 
+    background_tasks: BackgroundTasks,
+    current_username: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    admin = crud.get_user_by_username(db, current_username)
     db_user = crud.delete_user(db, user_id)
-    db_user = jsonable_encoder(db_user) if db_user else None
-
-    if db_user is None:
+    if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    crud.log_action(db, user.id, "DELETE", "users", None, old_model=db_user)
-    
-    return {
-        "status": "success",
-        "data": db_user
-    }
 
-#===========================================RoPA Record=========================================================#
-@app.get("/ropa-records")
-async def read_ropa_records(skip: int = 0,
-                            limit: int = 100,
-                            db: Session = Depends(get_db)):
-    records = crud.get_ropa_records(db, skip=skip, limit=limit)
-    return {
-        "status": "success",
-        "data": records
-    }
+    background_tasks.add_task(
+        crud.log_action_background,
+        user_id=admin.id,
+        action="DELETE",
+        table_name="users",
+        record_id=user_id,
+        old_model=db_user
+    )
+    return {"status": "success", "message": "User deleted"}
 
-@app.get("/ropa-records/me")
-async def read_my_ropa_records(skip: int = 0,
-                               limit: int = 100,
-                               current_username: str = Depends(get_current_user),
-                               db: Session = Depends(get_db)):
-    user = crud.get_user_by_username(db,username=current_username)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    records = crud.get_ropa_records_by_user(db, user_id=user.id, skip=skip, limit=limit)
-    
-    return {
-        "status": "success",
-        "data": records
-    }
-
-@app.get("/ropa-records/{record_id}")
-async def read_ropa_record(record_id: int,
-                           db: Session = Depends(get_db)):
-    record = crud.get_ropa_record_by_id(db, record_id=record_id)
-    if record is None:
-        raise HTTPException(status_code=404, detail="RoPA record not found")
-        
-    return {
-        "status": "success",
-        "data": record
-    }
+# ===========================================================================
+#                                ROPA ENDPOINTS
+# ===========================================================================
 
 @app.post("/ropa-records")
-async def create_ropa_record(ropa_data: schemas.RoPARecord, 
-                            current_username: str = Depends(get_current_user), 
-                            db : Session = Depends(get_db)
-                            ):
-    user = crud.get_user_by_username(db, username=current_username)
-
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
+async def create_ropa_record(
+    record: schemas.RoPARecord, 
+    background_tasks: BackgroundTasks,
+    current_username: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user = crud.get_user_by_username(db, current_username)
+    db_ropa = crud.create_ropa_record(db, record, user.id)
     
-    saved_data = crud.create_ropa_record(db, ropa_data)
+    background_tasks.add_task(
+        crud.log_action_background,
+        user_id=user.id,
+        action="CREATE",
+        table_name="ropa_record",
+        record_id=db_ropa.id,
+        new_model=record.dict()
+    )
+    return db_ropa
 
-    crud.log_action(db, user.id, "CREATE", "ropa_records", saved_data.id, new_model=saved_data)
-    
-    return {"status": "success", "message": "RoPA record data received", "data": saved_data}
+@app.get("/ropa-records")
+async def read_ropa_records(db: Session = Depends(get_db)):
+    return crud.get_ropa_records(db)
+
+@app.get("/ropa-records/{record_id}")
+async def read_ropa_record(record_id: int, db: Session = Depends(get_db)):
+    db_record = crud.get_ropa_record_by_id(db, record_id)
+    if not db_record:
+        raise HTTPException(status_code=404, detail="Record not found")
+    return db_record
 
 @app.put("/ropa-records/{record_id}")
-async def update_ropa_record(record_id: int, 
-                            ropa_update: schemas.RoPARecordUpdate, 
-                            current_username: str = Depends(get_current_user), 
-                            db: Session = Depends(get_db)
-                            ):
+async def update_ropa_record(
+    record_id: int, 
+    record_update: schemas.RoPARecordUpdate, 
+    background_tasks: BackgroundTasks,
+    current_username: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user = crud.get_user_by_username(db, current_username)
+    db_record = crud.get_ropa_record_by_id(db, record_id)
+    if not db_record:
+        raise HTTPException(status_code=404, detail="Record not found")
 
-    user = crud.get_user_by_username(db, username=current_username)
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-        
-    db_ropa_old = crud.get_ropa_record_by_id(db, record_id)
-    if not db_ropa_old:
-        raise HTTPException(status_code=404, detail="RoPA record not found")
+    old_data = {column.name: getattr(db_record, column.name) for column in db_record.__table__.columns}
+    updated_record = crud.update_ropa_record(db, record_id, record_update)
+    
+    background_tasks.add_task(
+        crud.log_action_background,
+        user_id=user.id,
+        action="UPDATE",
+        table_name="ropa_record",
+        record_id=record_id,
+        old_model=old_data,
+        new_model=record_update.dict(exclude_unset=True)
+    )
+    return updated_record
 
-    update_data = crud.update_ropa_record(db, record_id, ropa_update)
+@app.delete("/ropa-records/{record_id}")
+async def delete_ropa_record(
+    record_id: int, 
+    background_tasks: BackgroundTasks,
+    current_username: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user = crud.get_user_by_username(db, current_username)
+    # ฟังก์ชันลบใน CRUD ควรคืนค่าเป็น Dict ตามที่แนะนำไปก่อนหน้า
+    db_ropa_dict = crud.delete_ropa_record(db, record_id)
+    if not db_ropa_dict:
+        raise HTTPException(status_code=404, detail="Record not found")
     
-    crud.log_action(db, user.id, "UPDATE", "ropa_records", record_id, old_model=db_ropa_old, new_model=update_data)
+    background_tasks.add_task(
+        crud.log_action_background,
+        user_id=user.id,
+        action="DELETE",
+        table_name="ropa_record",
+        record_id=record_id,
+        old_model=db_ropa_dict
+    )
+    return {"status": "success", "data": db_ropa_dict}
 
-    return {"status": "success", "message": "RoPA record data updated", "data": update_data}
+# ===========================================================================
+#                                LOGS & FEEDBACK
+# ===========================================================================
 
-@app.delete("/ropa-record/{record_id}")
-async def delete_ropa_record(record_id: int,
-                             current_username: str = Depends(get_current_user),
-                             db: Session = Depends(get_db)):
-    user = crud.get_user_by_username(db, username=current_username)
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-        
-    db_ropa = crud.delete_ropa_record(db, record_id)
-    if db_ropa is None:
-        raise HTTPException(status_code=404, detail="RoPA record not found")
-    
-    crud.log_action(db, user.id, "DELETE", "ropa_records", record_id, old_model=db_ropa)
-    return {
-        "status": "success",
-        "data": db_ropa
-    }
-
-#===========================================Transfers=========================================================#
-@app.get("/transfers/{ropa_id}")
-async def read_transfer_by_ropa_id(ropa_id: int,
-                                   db: Session = Depends(get_db)):
-    transfer = crud.get_transfer_by_ropa_id(db, ropa_id)
-    if transfer is None:
-        raise HTTPException(status_code=404, detail="Transfer data not found")
-        
-    return {
-        "status": "success",
-        "data": transfer
-    }
-
-@app.post("/transfers")
-async def create_transfer(transfer_data: schemas.Transfer, 
-                        current_username: str = Depends(get_current_user), 
-                        db : Session = Depends(get_db)
-                        ):
-    user = crud.get_user_by_username(db, username=current_username)
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    
-    saved_data = crud.create_transfer(db, transfer_data)
-    
-    crud.log_action(db, user.id, "CREATE", "transfers", ropa_id = saved_data.ropa_id, new_model=saved_data)
-    
-    return {"status": "success", "message": "Transfer data received", "data": saved_data}
-
-@app.put("/transfers/{transfer_id}")
-async def update_transfer(transfer_id: int, 
-                        transfer_update: schemas.TransferUpdate, 
-                        current_username: str = Depends(get_current_user), 
-                        db: Session = Depends(get_db)
-                        ):
-    user = crud.get_user_by_username(db, username=current_username)
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    
-    db_transfer_old = crud.get_transfer_by_id(db, transfer_id)
-    if db_transfer_old is None:
-        raise HTTPException(status_code=404, detail="Transfer data not found")
-    
-    update_data = crud.update_transfer(db, transfer_id, transfer_update)
-    
-    crud.log_action(db, user.id, "UPDATE", "transfers", ropa_id = db_transfer_old.ropa_id, old_model=db_transfer_old, new_model=update_data)
-
-    return {"status": "success", "message": "Transfer data updated", "data": update_data}
-
-@app.delete("/transfers/{transfer_id}")
-async def delete_transfer(transfer_id: int,
-                        current_username: str = Depends(get_current_user),
-                        db: Session = Depends(get_db)):
-    user = crud.get_user_by_username(db, username=current_username)
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    
-    db_transfer = crud.delete_transfer(db, transfer_id)
-    if db_transfer is None:
-        raise HTTPException(status_code=404, detail="Transfer data not found")
-    
-    crud.log_action(db, user.id, "DELETE", "transfers", ropa_id = db_transfer.ropa_id, old_model=db_transfer)
-    
-    return {
-        "status": "success",
-        "data": db_transfer
-    }
-
-#===========================================SecurityMeasure=========================================================#
-
-@app.get("/security/{ropa_id}")
-async def read_security_by_ropa_id(ropa_id: int,
-                                db: Session = Depends(get_db)):
-    security = crud.get_security_by_ropa_id(db, ropa_id)
-    if security is None:
-        raise HTTPException(status_code=404, detail="Security Measure not found")
-        
-    return {
-        "status": "success",
-        "data": security
-    }
-
-@app.post("/security")
-async def create_security(security_data: schemas.SecurityMeasure,
-                          current_username: str = Depends(get_current_user),
-                          db : Session = Depends(get_db)):
-    user = crud.get_user_by_username(db, username=current_username)
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    
-    saved_data = crud.create_security(db, security_data)
-    
-    crud.log_action(db, user.id, "CREATE", "security_measure", ropa_id = saved_data.ropa_id, new_model=saved_data)
-
-    return {"status": "success", "message": "Security Measure data received", "data": saved_data}
-
-@app.put("/security/{security_id}")
-async def update_security(security_id: int,
-                          security_update: schemas.SecurityMeasureUpdate,
-                          current_username: str = Depends(get_current_user),
-                          db: Session = Depends(get_db)):
-    user = crud.get_user_by_username(db, username=current_username)
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    
-    db_security_old = crud.get_security_by_id(db, security_id)
-    if not db_security_old:
-        raise HTTPException(status_code=404, detail="Security Measure data not found")
-    
-    update_data = crud.update_security(db, security_id, security_update)
-    crud.log_action(db, user.id, "UPDATE", "security_measure", ropa_id = db_security_old.ropa_id, old_model=db_security_old, new_model=update_data)
-    
-
-    return {"status": "success", "message": "Security Measure data updated", "data": update_data}
-
-@app.delete("/security/{security_id}")
-async def delete_security(security_id: int,
-                          current_username: str = Depends(get_current_user),
-                          db: Session = Depends(get_db)):
-
-    user = crud.get_user_by_username(db, username=current_username)
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    
-    db_security = crud.delete_security(db, security_id)
-    if db_security is None:
-        raise HTTPException(status_code=404, detail="Security Measure data not found")
-    
-    crud.log_action(db, user.id, "DELETE", "security_measure", ropa_id = db_security.ropa_id, old_model=db_security)
-    
-    return {
-        "status": "success",
-        "data": db_security
-    }
-
-#===========================================AuditLogs=========================================================#
-@app.get("/logs")
-async def read_logs(
-    skip: int = 0, 
-    limit: int = 100, 
-    db: Session = Depends(get_db)):
-    logs = crud.get_logs(db, skip=skip, limit=limit)
-    return {
-        "status": "success",
-        "data": logs
-    }
-
-@app.get("logs/{ropa_id}")
-async def read_logs_by_ropa_id(ropa_id: int,
-                               db: Session = Depends(get_db)):
+@app.get("/logs/{ropa_id}")
+async def read_logs_by_ropa_id(ropa_id: int, db: Session = Depends(get_db)):
     logs = crud.get_logs_by_ropa_id(db, ropa_id)
-    if logs is None:
-        raise HTTPException(status_code=404, detail="Ropa record not found")
-        
-    return {
-        "status": "success",
-        "data": logs
-    }
-
-@app.post("/logs")
-async def create_log(log_data: schemas.AuditLog,
-                     db : Session = Depends(get_db)):
-    print(f"Recieved data: {log_data}")
-    saved_data = crud.create_log(db, log_data)
-    return {"status": "success", "message": "log data received", "data": saved_data}
-
-#===========================================Feedback=========================================================#
+    return {"status": "success", "data": logs}
 
 @app.get("/feedbacks/{ropa_id}")
-async def read_feedback_by_ropa_id(ropa_id: int,
-                               db: Session = Depends(get_db)):
+async def read_feedback_by_ropa_id(ropa_id: int, db: Session = Depends(get_db)):
     feedbacks = crud.get_feedback_by_ropa_id(db, ropa_id)
-    if feedbacks is None:
-        raise HTTPException(status_code=404, detail="Ropa record not found")
-        
-    return {
-        "status": "success",
-        "data": feedbacks
-    }
+    return {"status": "success", "data": feedbacks}
 
 @app.post("/feedback")
-async def create_feedback(feedback_data: schemas.Feedback,
-                     db : Session = Depends(get_db)):
-    print(f"Recieved data: {feedback_data}")
+async def create_feedback(
+    feedback_data: schemas.Feedback, 
+    db: Session = Depends(get_db)
+):
     saved_data = crud.create_feedback(db, feedback_data)
-    return {"status": "success", "message": "log data received", "data": saved_data}
+    return {"status": "success", "message": "Feedback created", "data": saved_data}
 
-@app.delete("/feedback")
-async def delete_feedback(feedback_id: int,
-                      db: Session = Depends(get_db)):
-    db_feedback = crud.delete_user(db, feedback_id)
-    if db_feedback is None:
+@app.delete("/feedback/{feedback_id}")
+async def delete_feedback(feedback_id: int, db: Session = Depends(get_db)):
+    # แก้ไขให้เรียกฟังก์ชัน delete_feedback ที่ถูกต้อง
+    db_feedback = crud.delete_feedback(db, feedback_id)
+    if not db_feedback:
         raise HTTPException(status_code=404, detail="Feedback not found")
-    
-    return {
-        "status": "success",
-        "data": db_feedback
-    }
-
-
-
-
+    return {"status": "success", "message": "Feedback deleted"}
