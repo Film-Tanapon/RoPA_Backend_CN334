@@ -80,7 +80,7 @@ class Feedback(Base):
     __tablename__ = "feedback"
 
     id = Column(Integer, primary_key=True, index=True)
-    ropa_id = Column(Integer, ForeignKey("ropa_record.id"))
+    ropa_id = Column(Integer)
     detail = Column(String)
     create_by = Column(Integer, ForeignKey("users.id"))
     create_date = Column(DateTime(timezone=True), server_default=func.now())
