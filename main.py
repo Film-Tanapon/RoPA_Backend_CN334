@@ -161,7 +161,7 @@ async def user_update(user_id: int,
     update_data = jsonable_encoder(update_data) if update_data else None
 
 
-    crud.log_action(db, user.id, "UPDATE", "users", user_id, old_model=db_user_old, new_model=update_data)
+    crud.log_action(db, user.id, "UPDATE", "users", None, old_model=db_user_old, new_model=update_data)
 
     return {"status": "success", "message": "RoPA record data updated", "data": update_data}
 
