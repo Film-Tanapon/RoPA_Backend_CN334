@@ -69,7 +69,7 @@ class AuditLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    record_id = Column(Integer, ForeignKey("ropa_record.id"))
+    record_id = Column(Integer)
     action = Column(String)
     table_name = Column(String)
     old_value = Column(JSON)

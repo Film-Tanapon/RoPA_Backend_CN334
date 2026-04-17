@@ -180,7 +180,7 @@ async def delete_user(user_id: int,
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     
-    crud.log_action(db, user.id, "DELETE", "users", user_id, old_model=db_user)
+    crud.log_action(db, user.id, "DELETE", "users", None, old_model=db_user)
     
     return {
         "status": "success",
