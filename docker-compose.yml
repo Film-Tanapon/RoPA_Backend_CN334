@@ -7,3 +7,12 @@ services:
       - .:/app
     env_file:
       - .env
+
+  robot_tester:
+    build:
+      context: ./tests
+      dockerfile: Dockerfile.robot
+    volumes:
+      - ./tests:/tests
+    depends_on:
+      - api-server
