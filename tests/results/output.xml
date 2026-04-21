@@ -1,57 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<robot generator="Robot 7.4.2 (Python 3.10.20 on linux)" generated="2026-04-21T17:41:59.298535" rpa="false" schemaversion="5">
+<robot generator="Robot 7.4.2 (Python 3.10.20 on linux)" generated="2026-04-21T18:16:47.063234" rpa="false" schemaversion="5">
 <suite id="s1" name="Tests" source="/tests">
 <suite id="s1-s1" name="Api Test" source="/tests/api_test.robot">
 <kw name="Create Session" owner="RequestsLibrary" type="SETUP">
-<msg time="2026-04-21T17:41:59.385286" level="INFO">Creating Session using : alias=api_session, url=http://api-server:8000, headers={},                     cookies={}, auth=None, timeout=None, proxies=None, verify=False,                     debug=0 </msg>
+<msg time="2026-04-21T18:16:47.174471" level="INFO">Creating Session using : alias=api_session, url=http://api-server:8000, headers={},                     cookies={}, auth=None, timeout=None, proxies=None, verify=False,                     debug=0 </msg>
 <arg>api_session</arg>
 <arg>${BASE_URL}</arg>
 <doc>Create Session: create a HTTP session to a server</doc>
-<status status="PASS" start="2026-04-21T17:41:59.385067" elapsed="0.000464"/>
+<status status="PASS" start="2026-04-21T18:16:47.174235" elapsed="0.000381"/>
 </kw>
 <test id="s1-s1-t1" name="Verify Get All Patients Successfully" line="11">
 <kw name="Create Session" owner="RequestsLibrary">
-<msg time="2026-04-21T17:41:59.386426" level="INFO">Creating Session using : alias=api_session, url=http://api-server:8000, headers={},                     cookies={}, auth=None, timeout=None, proxies=None, verify=False,                     debug=0 </msg>
+<msg time="2026-04-21T18:16:47.175310" level="INFO">Creating Session using : alias=api_session, url=http://api-server:8000, headers={},                     cookies={}, auth=None, timeout=None, proxies=None, verify=False,                     debug=0 </msg>
 <arg>api_session</arg>
 <arg>${BASE_URL}</arg>
 <doc>Create Session: create a HTTP session to a server</doc>
-<status status="PASS" start="2026-04-21T17:41:59.386252" elapsed="0.000303"/>
+<status status="PASS" start="2026-04-21T18:16:47.175229" elapsed="0.000163"/>
 </kw>
 <kw name="GET On Session" owner="RequestsLibrary">
-<msg time="2026-04-21T17:41:59.617175" level="INFO">GET Request : url=http://api-server:8000/users 
- path_url=/users 
- headers={'User-Agent': 'python-requests/2.33.1', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive'} 
- body=None 
- </msg>
-<msg time="2026-04-21T17:41:59.617314" level="INFO">GET Response : url=http://api-server:8000/users 
- status=200, reason=OK 
- headers={'date': 'Tue, 21 Apr 2026 17:41:59 GMT', 'server': 'uvicorn', 'content-length': '1484', 'content-type': 'application/json'} 
- body=[{"username":"Film","email":"film@gmail.com","fullname":"Tanapon Ubonthat","tel":"0981010725","status":"Active","last_active":"2026-04-17T16:45:56.431368+00:00","password_hash":"$argon2id$v=19$m=65536,t=3,p=4$rFWK0XovBaDUmjOGsLYWYg$PAjJ8WYL4/LI6dcCNmA7ksTxoaxHJDMmY+KKpmldLbU","id":1,"role":"Admin","departments":"None","create_date":"2026-04-17T16:45:56.431368+00:00"},{"username":"Bright","email":"Bright@gmail.com","fullname":"Bright","tel":"0123456789","status":"Active","last_active":"2026-04-21T16:37:35.134543+00:00","password_hash":"$argon2id$v=19$m=65536,t=3,p=4$+z/HOCdEqJUSAgBgLOWcEw$2owyr0CAic5+pNGcF4gHrTPZ86YpZH2mehsLLeg5gpM","id":3,"role":"Admin","departments":"None","create_date":"2026-04-17T16:50:39.547707+00:00"},{"username":"Robot","email":"robottest@gmail.com","fullname":"RobotTest","tel":"1234567890","status":"active","last_active":"2026-04-21T17:29:28.789850+00:00","password_hash":"$argon2id$v=19$m=65536,t=3,p=4$i3GOMYYwZszZu9faG6MUIg$bHviSg7O5FxwvFaf1Lx5zrTBk2vWj+/B2/PT29uaft8","id":6,"role":"Admin","departments":"BackendDev","create_date":"2026-04-21T17:29:28.789850+00:00"},{"username":"Robot1","email":"robottest1@gmail.com","fullname":"RobotTest","tel":"1234567891","status":"active","last_active":"2026-04-21T17:40:17.182752+00:00","password_hash":"$argon2id$v=19$m=65536,t=3,p=4$2Ps/xxgDQOjdu7f2PofQWg$Ot2wzcBiZyKP8i40fJR9Xl1tQhXdFe29+iMGyCs8HFA","id":11,"role":"Admin","departments":"BackendDev","create_date":"2026-04-21T17:40:17.182752+00:00"}] 
- </msg>
-<msg time="2026-04-21T17:41:59.617497" level="INFO">${response} = &lt;Response [200]&gt;</msg>
+<msg time="2026-04-21T18:16:47.177564" level="WARN">Retrying (RetryAdapter(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused")': /users</msg>
+<msg time="2026-04-21T18:16:47.384345" level="WARN">Retrying (RetryAdapter(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused")': /users</msg>
+<msg time="2026-04-21T18:16:47.791992" level="WARN">Retrying (RetryAdapter(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused")': /users</msg>
+<msg time="2026-04-21T18:16:47.795880" level="FAIL">ConnectionError: HTTPConnectionPool(host='api-server', port=8000): Max retries exceeded with url: /users (Caused by NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused"))</msg>
 <var>${response}</var>
 <arg>api_session</arg>
 <arg>/users</arg>
 <doc>Sends a GET request on a previously created HTTP Session.</doc>
-<status status="PASS" start="2026-04-21T17:41:59.386656" elapsed="0.230880"/>
+<status status="FAIL" start="2026-04-21T18:16:47.175454" elapsed="0.623900">ConnectionError: HTTPConnectionPool(host='api-server', port=8000): Max retries exceeded with url: /users (Caused by NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused"))</status>
 </kw>
 <kw name="Status Should Be" owner="RequestsLibrary">
 <arg>200</arg>
 <arg>${response}</arg>
 <doc>Fails if response status code is different than the expected.</doc>
-<status status="PASS" start="2026-04-21T17:41:59.617742" elapsed="0.000354"/>
+<status status="NOT RUN" start="2026-04-21T18:16:47.799992" elapsed="0.000080"/>
 </kw>
 <kw name="Log To Console" owner="BuiltIn">
 <arg>\nResponse Data: ${response.json()}</arg>
 <doc>Logs the given message to the console.</doc>
-<status status="PASS" start="2026-04-21T17:41:59.618254" elapsed="0.000908"/>
+<status status="NOT RUN" start="2026-04-21T18:16:47.800371" elapsed="0.000040"/>
 </kw>
 <doc>ทดสอบการดึงข้อมูลผู้ใช้ทั้งหมดจาก API</doc>
-<status status="PASS" start="2026-04-21T17:41:59.385645" elapsed="0.233699"/>
+<status status="FAIL" start="2026-04-21T18:16:47.174712" elapsed="0.626169">ConnectionError: HTTPConnectionPool(host='api-server', port=8000): Max retries exceeded with url: /users (Caused by NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused"))</status>
 </test>
 <test id="s1-s1-t2" name="Verify Create New Patient" line="18">
 <kw name="Create Dictionary" owner="BuiltIn">
-<msg time="2026-04-21T17:41:59.621070" level="INFO">${payload} = {'username': 'Robot2', 'email': 'robottest2@gmail.com', 'password_hash': 'Test', 'fullname': 'RobotTest', 'tel': '1234567892', 'role': 'Admin', 'departments': 'BackendDev', 'status': 'active'}</msg>
+<msg time="2026-04-21T18:16:47.805371" level="INFO">${payload} = {'username': 'Robot2', 'email': 'robottest2@gmail.com', 'password_hash': 'Test', 'fullname': 'RobotTest', 'tel': '1234567892', 'role': 'Admin', 'departments': 'BackendDev', 'status': 'active'}</msg>
 <var>${payload}</var>
 <arg>username=Robot2</arg>
 <arg>email=robottest2@gmail.com</arg>
@@ -62,102 +55,97 @@
 <arg>departments=BackendDev</arg>
 <arg>status=active</arg>
 <doc>Creates and returns a dictionary based on the given ``items``.</doc>
-<status status="PASS" start="2026-04-21T17:41:59.620438" elapsed="0.000683"/>
+<status status="PASS" start="2026-04-21T18:16:47.803205" elapsed="0.002234"/>
 </kw>
 <kw name="Create Dictionary" owner="BuiltIn">
-<msg time="2026-04-21T17:41:59.621681" level="INFO">${headers} = {'Content-Type': 'application/json'}</msg>
+<msg time="2026-04-21T18:16:47.806351" level="INFO">${headers} = {'Content-Type': 'application/json'}</msg>
 <var>${headers}</var>
 <arg>Content-Type=application/json</arg>
 <doc>Creates and returns a dictionary based on the given ``items``.</doc>
-<status status="PASS" start="2026-04-21T17:41:59.621325" elapsed="0.000381"/>
+<status status="PASS" start="2026-04-21T18:16:47.805738" elapsed="0.000654"/>
 </kw>
 <kw name="POST On Session" owner="RequestsLibrary">
-<msg time="2026-04-21T17:42:00.283280" level="INFO">POST Request : url=http://api-server:8000/users 
- path_url=/users 
- headers={'User-Agent': 'python-requests/2.33.1', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive', 'Content-Type': 'application/json', 'Content-Length': '192'} 
- body=b'{"username": "Robot2", "email": "robottest2@gmail.com", "password_hash": "Test", "fullname": "RobotTest", "tel": "1234567892", "role": "Admin", "departments": "BackendDev", "status": "active"}' 
- </msg>
-<msg time="2026-04-21T17:42:00.283367" level="INFO">POST Response : url=http://api-server:8000/users 
- status=200, reason=OK 
- headers={'date': 'Tue, 21 Apr 2026 17:41:59 GMT', 'server': 'uvicorn', 'content-length': '270', 'content-type': 'application/json'} 
- body={"username":"Robot2","email":"robottest2@gmail.com","password_hash":"$argon2id$v=19$m=65536,t=3,p=4$qDVmDOHce+/9/9+b854z5g$iHgKvIwsrjl1RcFOvJG9Cp1slZR0gumEYv86RVPfguM","fullname":"RobotTest","tel":"1234567892","role":"Admin","departments":"BackendDev","status":"active"} 
- </msg>
-<msg time="2026-04-21T17:42:00.283526" level="INFO">${response} = &lt;Response [200]&gt;</msg>
+<msg time="2026-04-21T18:16:47.809259" level="WARN">Retrying (RetryAdapter(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused")': /users</msg>
+<msg time="2026-04-21T18:16:48.014480" level="WARN">Retrying (RetryAdapter(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused")': /users</msg>
+<msg time="2026-04-21T18:16:48.422465" level="WARN">Retrying (RetryAdapter(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused")': /users</msg>
+<msg time="2026-04-21T18:16:48.425363" level="FAIL">ConnectionError: HTTPConnectionPool(host='api-server', port=8000): Max retries exceeded with url: /users (Caused by NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused"))</msg>
 <var>${response}</var>
 <arg>api_session</arg>
 <arg>/users</arg>
 <arg>json=${payload}</arg>
 <arg>headers=${headers}</arg>
 <doc>Sends a POST request on a previously created HTTP Session.</doc>
-<status status="PASS" start="2026-04-21T17:41:59.621810" elapsed="0.661743"/>
+<status status="FAIL" start="2026-04-21T18:16:47.806554" elapsed="0.619762">ConnectionError: HTTPConnectionPool(host='api-server', port=8000): Max retries exceeded with url: /users (Caused by NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused"))</status>
 </kw>
 <kw name="Status Should Be" owner="RequestsLibrary">
 <arg>200</arg>
 <arg>${response}</arg>
 <doc>Fails if response status code is different than the expected.</doc>
-<status status="PASS" start="2026-04-21T17:42:00.283726" elapsed="0.000195"/>
+<status status="NOT RUN" start="2026-04-21T18:16:48.426938" elapsed="0.000081"/>
 </kw>
 <doc>ทดสอบการสร้างข้อมูลผู้ใช้ทั้งหมดจาก API</doc>
-<status status="PASS" start="2026-04-21T17:41:59.619594" elapsed="0.664435"/>
+<status status="FAIL" start="2026-04-21T18:16:47.801416" elapsed="0.626087">ConnectionError: HTTPConnectionPool(host='api-server', port=8000): Max retries exceeded with url: /users (Caused by NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused"))</status>
 </test>
 <test id="s1-s1-t3" name="Verify Get All Patients Successfully" line="25">
 <kw name="Create Dictionary" owner="BuiltIn">
-<msg time="2026-04-21T17:42:00.285548" level="INFO">${headers} = {'Content-Type': 'application/json', 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJCcmlnaHQiLCJleHAiOjE3NzY3OTQ2Njl9.q6YOnfbEpHxMkOrWO4PyCcfHRMaEMu_pROOgt3mx1W0'}</msg>
+<msg time="2026-04-21T18:16:48.431585" level="INFO">${headers} = {'Content-Type': 'application/json', 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJCcmlnaHQiLCJleHAiOjE3NzY3OTQ2Njl9.q6YOnfbEpHxMkOrWO4PyCcfHRMaEMu_pROOgt3mx1W0'}</msg>
 <var>${headers}</var>
 <arg>Content-Type=application/json</arg>
 <arg>Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJCcmlnaHQiLCJleHAiOjE3NzY3OTQ2Njl9.q6YOnfbEpHxMkOrWO4PyCcfHRMaEMu_pROOgt3mx1W0</arg>
 <doc>Creates and returns a dictionary based on the given ``items``.</doc>
-<status status="PASS" start="2026-04-21T17:42:00.285021" elapsed="0.000557"/>
+<status status="PASS" start="2026-04-21T18:16:48.430456" elapsed="0.001599"/>
 </kw>
 <kw name="DELETE On Session" owner="RequestsLibrary">
-<msg time="2026-04-21T17:42:01.127316" level="INFO">DELETE Request : url=http://api-server:8000/users/6 
- path_url=/users/6 
- headers={'User-Agent': 'python-requests/2.33.1', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive', 'Content-Type': 'application/json', 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJCcmlnaHQiLCJleHAiOjE3NzY3OTQ2Njl9.q6YOnfbEpHxMkOrWO4PyCcfHRMaEMu_pROOgt3mx1W0', 'Content-Length': '0'} 
- body=None 
- </msg>
-<msg time="2026-04-21T17:42:01.127404" level="INFO">DELETE Response : url=http://api-server:8000/users/6 
- status=200, reason=OK 
- headers={'date': 'Tue, 21 Apr 2026 17:41:59 GMT', 'server': 'uvicorn', 'content-length': '45', 'content-type': 'application/json'} 
- body={"status":"success","message":"User deleted"} 
- </msg>
-<msg time="2026-04-21T17:42:01.127572" level="INFO">${response} = &lt;Response [200]&gt;</msg>
+<msg time="2026-04-21T18:16:48.434693" level="WARN">Retrying (RetryAdapter(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused")': /users/6</msg>
+<msg time="2026-04-21T18:16:48.641819" level="WARN">Retrying (RetryAdapter(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused")': /users/6</msg>
+<msg time="2026-04-21T18:16:49.048771" level="WARN">Retrying (RetryAdapter(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused")': /users/6</msg>
+<msg time="2026-04-21T18:16:49.051036" level="FAIL">ConnectionError: HTTPConnectionPool(host='api-server', port=8000): Max retries exceeded with url: /users/6 (Caused by NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused"))</msg>
 <var>${response}</var>
 <arg>api_session</arg>
 <arg>/users/6</arg>
 <arg>headers=${headers}</arg>
 <doc>Sends a DELETE request on a previously created HTTP Session.</doc>
-<status status="PASS" start="2026-04-21T17:42:00.286303" elapsed="0.841297"/>
+<status status="FAIL" start="2026-04-21T18:16:48.432298" elapsed="0.619582">ConnectionError: HTTPConnectionPool(host='api-server', port=8000): Max retries exceeded with url: /users/6 (Caused by NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused"))</status>
 </kw>
 <kw name="Status Should Be" owner="RequestsLibrary">
 <arg>200</arg>
 <arg>${response}</arg>
 <doc>Fails if response status code is different than the expected.</doc>
-<status status="PASS" start="2026-04-21T17:42:01.127768" elapsed="0.000388"/>
+<status status="NOT RUN" start="2026-04-21T18:16:49.052392" elapsed="0.000060"/>
 </kw>
 <kw name="Log To Console" owner="BuiltIn">
 <arg>\nResponse Data: ${response.json()}</arg>
 <doc>Logs the given message to the console.</doc>
-<status status="PASS" start="2026-04-21T17:42:01.128311" elapsed="0.000878"/>
+<status status="NOT RUN" start="2026-04-21T18:16:49.052608" elapsed="0.000029"/>
 </kw>
 <doc>ทดสอบการลบข้อมูลผู้ใช้ทั้งหมดจาก API</doc>
-<status status="PASS" start="2026-04-21T17:42:00.284193" elapsed="0.845183"/>
+<status status="FAIL" start="2026-04-21T18:16:48.427944" elapsed="0.625078">ConnectionError: HTTPConnectionPool(host='api-server', port=8000): Max retries exceeded with url: /users/6 (Caused by NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused"))</status>
 </test>
-<status status="PASS" start="2026-04-21T17:41:59.321795" elapsed="1.807983"/>
+<status status="FAIL" start="2026-04-21T18:16:47.092366" elapsed="1.961363"/>
 </suite>
-<status status="PASS" start="2026-04-21T17:41:59.300355" elapsed="1.829957"/>
+<status status="FAIL" start="2026-04-21T18:16:47.065774" elapsed="1.989074"/>
 </suite>
 <statistics>
 <total>
-<stat pass="3" fail="0" skip="0">All Tests</stat>
+<stat pass="0" fail="3" skip="0">All Tests</stat>
 </total>
 <tag>
 </tag>
 <suite>
-<stat name="Tests" id="s1" pass="3" fail="0" skip="0">Tests</stat>
-<stat name="Api Test" id="s1-s1" pass="3" fail="0" skip="0">Tests.Api Test</stat>
+<stat name="Tests" id="s1" pass="0" fail="3" skip="0">Tests</stat>
+<stat name="Api Test" id="s1-s1" pass="0" fail="3" skip="0">Tests.Api Test</stat>
 </suite>
 </statistics>
 <errors>
-<msg time="2026-04-21T17:42:00.284291" level="WARN">Multiple tests with name 'Verify Get All Patients Successfully' executed in suite 'Tests.Api Test'.</msg>
+<msg time="2026-04-21T18:16:47.177564" level="WARN">Retrying (RetryAdapter(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused")': /users</msg>
+<msg time="2026-04-21T18:16:47.384345" level="WARN">Retrying (RetryAdapter(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused")': /users</msg>
+<msg time="2026-04-21T18:16:47.791992" level="WARN">Retrying (RetryAdapter(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused")': /users</msg>
+<msg time="2026-04-21T18:16:47.809259" level="WARN">Retrying (RetryAdapter(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused")': /users</msg>
+<msg time="2026-04-21T18:16:48.014480" level="WARN">Retrying (RetryAdapter(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused")': /users</msg>
+<msg time="2026-04-21T18:16:48.422465" level="WARN">Retrying (RetryAdapter(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused")': /users</msg>
+<msg time="2026-04-21T18:16:48.428357" level="WARN">Multiple tests with name 'Verify Get All Patients Successfully' executed in suite 'Tests.Api Test'.</msg>
+<msg time="2026-04-21T18:16:48.434693" level="WARN">Retrying (RetryAdapter(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused")': /users/6</msg>
+<msg time="2026-04-21T18:16:48.641819" level="WARN">Retrying (RetryAdapter(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused")': /users/6</msg>
+<msg time="2026-04-21T18:16:49.048771" level="WARN">Retrying (RetryAdapter(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError("HTTPConnection(host='api-server', port=8000): Failed to establish a new connection: [Errno 111] Connection refused")': /users/6</msg>
 </errors>
 </robot>
