@@ -76,7 +76,7 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง")
     
     access_token = create_access_token(
-        data={"sub": user.username}, 
+        data={"sub": user.username, "role": user.role}, 
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     return {"access_token": access_token, "token_type": "bearer", "role": user.role}
