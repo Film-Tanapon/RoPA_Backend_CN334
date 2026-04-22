@@ -22,9 +22,13 @@ Verify Create New Patient
     ${response}=    POST On Session    api_session    /users    json=${payload}    headers=${headers}
     Status Should Be    200    ${response}
 
+    ${new_user_id}=    Set Variable    ${response.json()['id']}
+    Set Suite Variable    ${CREATED_USER_ID}    ${new_user_id}
+
+
 Verify Get All Patients Successfully
     [Documentation]    ทดสอบการลบข้อมูลผู้ใช้ทั้งหมดจาก API
     ${headers}=    Create Dictionary    Content-Type=application/json    Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJCcmlnaHQiLCJleHAiOjE3NzY3OTQ2Njl9.q6YOnfbEpHxMkOrWO4PyCcfHRMaEMu_pROOgt3mx1W0
-    ${response}=    Delete On Session    api_session    /users/13    headers=${headers}
+    ${response}=    Delete On Session    api_session    /users/${CREATED_USER_ID}    headers=${headers}
     Status Should Be    200    ${response}
     Log To Console    \nResponse Data: ${response.json()}
