@@ -216,7 +216,7 @@ async def delete_ropa_record(
     db: Session = Depends(get_db)
 ):
     user = crud.get_user_by_username(db, current_username)
-    
+
     db_ropa_dict = crud.delete_ropa_record(db, record_id)
     if not db_ropa_dict:
         raise HTTPException(status_code=404, detail="Record not found")
@@ -437,6 +437,11 @@ async def delete_security(
 async def read_logs_by_ropa_id(ropa_id: int, db: Session = Depends(get_db)):
     logs = crud.get_logs_by_ropa_id(db, ropa_id)
     return {"status": "success", "data": logs}
+
+@app.get("/feedback")
+async def read_feedback(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    requests = crud.get_feedback(db, skip=skip, limit=limit)
+    return requests
 
 @app.get("/feedback/{ropa_id}")
 async def read_feedback_by_ropa_id(ropa_id: int, db: Session = Depends(get_db)):

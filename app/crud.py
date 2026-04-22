@@ -294,10 +294,13 @@ def log_action_background(
 def get_feedback_by_id(db: Session, feedback_id: int):
     return db.query(models.Feedback).filter(models.Feedback.id == feedback_id).first()
 
+def get_feedback(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Feedback).offset(skip).limit(limit).all()
+
 def get_feedback_by_ropa_id(db: Session, ropa_id: int):
     return db.query(models.Feedback).filter(models.Feedback.ropa_id == ropa_id).all()
 
-def create_feedback(db: Session, log: schemas.Feedback, user_id: int):
+def create_feedback(db: Session, log: schemas.Feedback):
     db_feedback = models.Feedback(**log.dict())
     db.add(db_feedback)
     db.commit()
