@@ -46,13 +46,13 @@ class RoPARecord(Base):
     risk_level = Column(String)
     status = Column(String)
     create_date = Column(DateTime(timezone=True), server_default=func.now())
-    create_by = Column(Integer, ForeignKey("users.id"))
+    create_by = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
 
 class Transfer(Base):
     __tablename__ = "transfers"
 
     id = Column(Integer, primary_key=True, index=True)
-    ropa_id = Column(Integer, ForeignKey("ropa_record.id"))
+    ropa_id = Column(Integer, ForeignKey("ropa_record.id", ondelete="CASCADE"))
     country = Column(String)
     recipient_name = Column(String)
     transfer_method = Column(String)
@@ -63,7 +63,7 @@ class SecurityMeasure(Base):
     __tablename__ = "security_measures"
 
     id = Column(Integer, primary_key=True, index=True)
-    ropa_id = Column(Integer, ForeignKey("ropa_record.id"))
+    ropa_id = Column(Integer, ForeignKey("ropa_record.id", ondelete="CASCADE"))
     measure_type = Column(String)
     description = Column(String)
 
@@ -83,7 +83,7 @@ class Feedback(Base):
     __tablename__ = "feedback"
 
     id = Column(Integer, primary_key=True, index=True)
-    ropa_id = Column(Integer, ForeignKey("ropa_record.id"))
+    ropa_id = Column(Integer, ForeignKey("ropa_record.id", ondelete="CASCADE"))
     detail = Column(String)
     create_date = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -91,8 +91,8 @@ class Request(Base):
     __tablename__ = "request"
 
     id = Column(Integer, primary_key=True, index=True)
-    ropa_id = Column(Integer, ForeignKey("ropa_record.id"))
+    ropa_id = Column(Integer)
     req_type = Column(String)
     status= Column(String)
-    create_by = Column(Integer, ForeignKey("users.id"))
+    create_by = Column(Integer, ForeignKey("users.id"), ondelete="CASCADE")
     create_date = Column(DateTime(timezone=True), server_default=func.now())

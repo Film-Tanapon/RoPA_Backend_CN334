@@ -216,7 +216,7 @@ async def delete_ropa_record(
     db: Session = Depends(get_db)
 ):
     user = crud.get_user_by_username(db, current_username)
-    # ฟังก์ชันลบใน CRUD ควรคืนค่าเป็น Dict ตามที่แนะนำไปก่อนหน้า
+    
     db_ropa_dict = crud.delete_ropa_record(db, record_id)
     if not db_ropa_dict:
         raise HTTPException(status_code=404, detail="Record not found")
