@@ -262,7 +262,7 @@ async def create_transfer(
         user_id=user.id,
         action="CREATE",
         table_name="transfers",
-        record_id=saved_data.id,
+        record_id=saved_data.ropa_id,
         new_model=saved_data
     )
     
@@ -293,7 +293,7 @@ async def update_transfer(
         user_id=user.id,
         action="UPDATE",
         table_name="transfers",
-        record_id=transfer_id,
+        record_id=db_transfer_old.ropa_id,
         old_model=old_data,
         new_model=transfer_update.dict(exclude_unset=True)
     )
@@ -324,7 +324,7 @@ async def delete_transfer(
         user_id=user.id,
         action="DELETE",
         table_name="transfers",
-        record_id=transfer_id,
+        record_id=db_transfer.ropa_id,
         old_model=old_data
     )
     
@@ -361,7 +361,7 @@ async def create_security(
         user_id=user.id,
         action="CREATE",
         table_name="security_measures",
-        record_id=saved_data.id,
+        record_id=saved_data.ropa_id,
         new_model=saved_data
     )
  
@@ -392,7 +392,7 @@ async def update_security(
         user_id=user.id,
         action="UPDATE",
         table_name="security_measures",
-        record_id=security_id,
+        record_id=db_security_old.ropa_id,
         old_model=old_data,
         new_model=security_update.dict(exclude_unset=True)
     )
@@ -423,7 +423,7 @@ async def delete_security(
         user_id=user.id,
         action="DELETE",
         table_name="security_measures",
-        record_id=security_id,
+        record_id=db_security.ropa_id,
         old_model=old_data
     )
     
@@ -466,7 +466,7 @@ async def read_request(skip: int = 0, limit: int = 100, db: Session = Depends(ge
     return requests
 
 @app.post("/requests")
-async def create_security(
+async def create_requests(
     request_data: schemas.Request,
     background_tasks: BackgroundTasks,
     current_username: str = Depends(get_current_user),
@@ -482,9 +482,43 @@ async def create_security(
         crud.log_action_background,
         user_id=user.id,
         action="CREATE",
-        table_name="Request",
+        table_name="request",
         record_id=saved_data.ropa_id,
         new_model=saved_data
     )
  
-    return {"status": "success", "message": "Security Measure data received", "data": saved_data}
+    return {"status": "success", "message": "Request data received", "data": saved_data}
+
+@app.put("/requests/{request_id}")
+async def update_request(
+    request_id: int,
+    request_update: schemas.RequestUpdate,
+    background_tasks: BackgroundTasks,
+    current_username: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user = crud.get_user_by_username(db, username=current_username)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    db_request_old = crud.get_request_by_id(db, request_id)
+    if not db_request_old:
+        raise HTTPException(status_code=404, detail="Request data not found")
+ 
+    old_data = {column.name: getattr(db_request_old, column.name) for column in db_request_old.__table__.columns}
+    update_data = crud.update_request(db, request_id, request_update)
+ 
+    # [แก้ไข #1] เปลี่ยนจาก crud.log_action() → background_tasks + log_action_background()
+    background_tasks.add_task(
+        crud.log_action_background,
+        user_id=user.id,
+        action="UPDATE",
+        table_name="request",
+        record_id=db_request_old.ropa_id,
+        old_model=old_data,
+        new_model=request_update.dict(exclude_unset=True)
+    )
+ 
+    return {"status": "success", "message": "Request data updated", "data": update_data}
+
+
