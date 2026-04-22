@@ -79,6 +79,13 @@ def update_user(db: Session, user_id: int, user_update: schemas.UserUpdate):
     db.refresh(db_user)
     return db_user
 
+def update_last_active(db: Session, user_id: int):
+    from datetime import datetime, timezone
+    db_user = get_user_by_id(db, user_id)
+    if db_user:
+        db_user.last_active = datetime.now(timezone.utc)
+        db.commit()
+
 def delete_user(db: Session, user_id: int):
     db_user = get_user_by_id(db, user_id)
     if db_user:
