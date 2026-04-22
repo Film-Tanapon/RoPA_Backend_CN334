@@ -91,7 +91,7 @@ class Request(Base):
     __tablename__ = "request"
 
     id = Column(Integer, primary_key=True, index=True)
-    ropa_id = Column(Integer)
+    ropa_id = Column(Integer, ForeignKey("ropa_record.id", ondelete="CASCADE"))
     req_type = Column(String)
     status= Column(String)
     create_by = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
