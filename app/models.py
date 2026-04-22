@@ -87,3 +87,13 @@ class Feedback(Base):
     detail = Column(String)
     create_by = Column(Integer, ForeignKey("users.id"))
     create_date = Column(DateTime(timezone=True), server_default=func.now())
+
+class Request(Base):
+    __tablename__ = "request"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ropa_id = Column(Integer, ForeignKey("ropa_record.id"))
+    req_type = Column(String)
+    status= Column(String)
+    create_by = Column(Integer, ForeignKey("users.id"))
+    create_date = Column(DateTime(timezone=True), server_default=func.now())

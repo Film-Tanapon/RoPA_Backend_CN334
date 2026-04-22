@@ -310,3 +310,39 @@ def delete_feedback(db: Session, feedback_id: int):
         db.delete(db_feedback)
         db.commit()
     return db_feedback
+
+
+#========================================================REQUEST===========================================================#
+def get_request_by_id(db: Session, request_id: int):
+    return db.query(models.Request).filter(models.Request.id == request_id).first()
+
+def get_request(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Request).offset(skip).limit(limit).all()
+
+def create_request(db: Session, log: schemas.Request):
+    db_request = models.Request(**log.dict())
+    db.add(db_request)
+    db.commit()
+    db.refresh(db_request)
+    return db_request
+
+def update_request(db: Session, request_id: int, request_update: schemas.RequestUpdate):
+    db_request = get_request_by_id(db, request_id)
+    if not db_request:
+        return None
+
+    update_data = request_update.dict(exclude_unset=True)
+
+    for key, value in update_data.items():
+        setattr(db_request, key, value)
+
+    db.commit()
+    db.refresh(db_request)
+    return db_request
+
+def delete(db: Session, request_id: int):
+    db_request = get_request_by_id(db, request_id)
+    if db_request:
+        db.delete(db_request)
+        db.commit()
+    return db_request

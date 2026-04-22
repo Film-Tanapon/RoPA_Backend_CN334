@@ -33,7 +33,7 @@ app.add_middleware(
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 SECRET_KEY = "my_super_secret_key"  # แนะนำให้ใช้ os.getenv("SECRET_KEY") ในภายหลัง
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_HOURS = 2
 
 # --- Dependency ---
 def get_db():
@@ -77,7 +77,7 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     
     access_token = create_access_token(
         data={"sub": user.username, "role": user.role}, 
-        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_HOURS)
     )
 
     crud.update_last_active(db, user.id)
@@ -458,3 +458,33 @@ async def delete_feedback(feedback_id: int, db: Session = Depends(get_db)):
     if not db_feedback:
         raise HTTPException(status_code=404, detail="Feedback not found")
     return {"status": "success", "message": "Feedback deleted"}
+
+#===========================================REQUEST=========================================================#
+@app.get("/requests")
+async def read_request(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    requests = crud.get_request(db, skip=skip, limit=limit)
+    return requests
+
+@app.post("/requests")
+async def create_security(
+    request_data: schemas.Request,
+    background_tasks: BackgroundTasks,
+    current_username: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+    ):
+    user = crud.get_user_by_username(db, username=current_username)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    saved_data = crud.create_request(db, request_data)
+ 
+    background_tasks.add_task(
+        crud.log_action_background,
+        user_id=user.id,
+        action="CREATE",
+        table_name="Request",
+        record_id=saved_data.id,
+        new_model=saved_data
+    )
+ 
+    return {"status": "success", "message": "Security Measure data received", "data": saved_data}
