@@ -19,5 +19,6 @@ services:
       dockerfile: Dockerfile.robot
     volumes:
       - ./tests:/tests
-    depends_on:
-      - api-server
+  depends_on:
+    api-server:
+      condition: service_healthy
