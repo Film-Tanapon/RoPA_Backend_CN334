@@ -77,7 +77,7 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     
     access_token = create_access_token(
         data={"sub": user.username, "role": user.role}, 
-        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_HOURS)
+        expires_delta=timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
     )
 
     crud.update_last_active(db, user.id)
