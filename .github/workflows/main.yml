@@ -1,0 +1,27 @@
+name: FastAPI Backend CI/CD
+on:
+ push:
+   branches: [ "main" ] # หุนยนตจะทํางานทุกครั้งที่ Push เขา main
+# สําคัญมาก: ปลดล็อกสิทธิ์ใหหุนยนตสามารถแกโคดและ Push สาขา release ได
+permissions:
+   contents: write
+jobs:
+   test-and-release:
+     runs-on: ubuntu-latest
+     steps:
+       - name: 1. Checkout Code
+         uses: actions/checkout@v4
+         with:
+           fetch-depth: 0 # ดึงประวัติ Git มาทั้งหมดเพื่อให Push ขาม Branch ได
+       - name: 2. Run Robot Framework Tests
+         run: |
+           docker compose up --build --exit-code-from robot_tester
+         # ถา Robot รันไมผาน ขั้นตอนถัดไปจะไมทํางานเด็ดขาด
+       - name: 3. Promote to Release Branch
+       if: success() # จะทํางานก็ตอเมื่อขั้นตอนรันเทสต "ผาน" เทานั้น
+       run: |
+         git config --global user.name "github-actions[bot]"
+         git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+         # ดันโคดจากจุดปจจุบันไปที่สาขา release บน GitHub
+         git push origin HEAD:release --
