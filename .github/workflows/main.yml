@@ -18,10 +18,10 @@ jobs:
            docker compose up --build --exit-code-from robot_tester
          # ถา Robot รันไมผาน ขั้นตอนถัดไปจะไมทํางานเด็ดขาด
        - name: 3. Promote to Release Branch
-       if: success() # จะทํางานก็ตอเมื่อขั้นตอนรันเทสต "ผาน" เทานั้น
-       run: |
-         git config --global user.name "github-actions[bot]"
-         git config --global user.email "github-actions[bot]@users.noreply.github.com"
+         if: success() # จะทํางานก็ตอเมื่อขั้นตอนรันเทสต "ผาน" เทานั้น
+         run: |
+           git config --global user.name "github-actions[bot]"
+           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-         # ดันโคดจากจุดปจจุบันไปที่สาขา release บน GitHub
-         git push origin HEAD:release --
+           # ดันโคดจากจุดปจจุบันไปที่สาขา release บน GitHub
+           git push origin HEAD:release --
