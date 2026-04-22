@@ -94,5 +94,5 @@ class Request(Base):
     ropa_id = Column(Integer)
     req_type = Column(String)
     status= Column(String)
-    create_by = Column(Integer, ForeignKey("users.id"), ondelete="CASCADE")
+    create_by = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
     create_date = Column(DateTime(timezone=True), server_default=func.now())
