@@ -2,6 +2,36 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.security import get_password_hash
 from app.database import SessionLocal
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+import re
+
+def parse_retention_until(retention_start: str, retention_period: str):
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d"):
+        try:
+            start_date = datetime.strptime(retention_start.strip(), fmt)
+            break
+        except ValueError:
+            continue
+    else:
+        raise ValueError(f"ไม่สามารถอ่านรูปแบบวันที่ได้: '{retention_start}'")
+
+    # Parse retention_period: จับตัวเลขและหน่วย (เดือน / ปี)
+    match = re.match(r"(\d+)\s*(เดือน|ปี)", retention_period.strip())
+    if not match:
+        raise ValueError(
+            f"รูปแบบ retention_period ไม่ถูกต้อง: '{retention_period}' (ตัวอย่าง: '6 เดือน', '5 ปี')"
+        )
+
+    amount = int(match.group(1))
+    unit = match.group(2)
+
+    if unit == "เดือน":
+        retention_until = start_date + relativedelta(months=amount)
+    else:
+        retention_until = start_date + relativedelta(years=amount)
+
+    return retention_until
 
 #========================================================Users===========================================================#
 def create_user(db: Session, user: schemas.User):
@@ -57,11 +87,21 @@ def delete_user(db: Session, user_id: int):
     return db_user
 
 #========================================================RoPA Record===========================================================#
+
 def create_ropa_record(db: Session, ropa: schemas.RoPARecord, user_id: int):
     record_dict = ropa.dict()
     
+    try:
+        retention_until = parse_retention_until(
+            record_dict["retention_start"],
+            record_dict["retention_period"]
+        )
+    except ValueError as e:
+        raise ValueError(str(e))
+
     db_ropa = models.RoPARecord(
         **record_dict,
+        retention_until=retention_until,
         create_by=user_id
     )
 

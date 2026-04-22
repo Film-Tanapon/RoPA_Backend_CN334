@@ -38,12 +38,14 @@ class RoPARecord(Base):
     retention_method = Column(String)
     retention_start = Column(String)
     retention_period = Column(String)
+    retention_until = Column(DateTime(timezone=True))
     access_control = Column(String)
     disposal_method = Column(String)
     consent_exempt_basis = Column(String)
     right_rejection_reason = Column(String)
     risk_level = Column(String)
     status = Column(String)
+    create_date = Column(DateTime(timezone=True), server_default=func.now())
     create_by = Column(Integer, ForeignKey("users.id"))
 
 class Transfer(Base):
