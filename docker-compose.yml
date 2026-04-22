@@ -7,6 +7,11 @@ services:
       - .:/app
     env_file:
       - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"] # หรือ endpoint ที่มีอยู่จริง
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   robot_tester:
     build:
@@ -14,5 +19,6 @@ services:
       dockerfile: Dockerfile.robot
     volumes:
       - ./tests:/tests
-    depends_on:
-      - api-server
+  depends_on:
+    api-server:
+      condition: service_healthy

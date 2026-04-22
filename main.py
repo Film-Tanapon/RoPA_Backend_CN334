@@ -231,6 +231,204 @@ async def delete_ropa_record(
     )
     return {"status": "success", "data": db_ropa_dict}
 
+#===========================================Transfers=========================================================#
+ 
+@app.get("/transfers/{ropa_id}")
+async def read_transfer_by_ropa_id(
+    ropa_id: int,
+    db: Session = Depends(get_db)
+):
+    transfer = crud.get_transfer_by_ropa_id(db, ropa_id)
+    if transfer is None:
+        raise HTTPException(status_code=404, detail="Transfer data not found")
+    return {"status": "success", "data": transfer}
+ 
+@app.post("/transfers")
+async def create_transfer(
+    transfer_data: schemas.Transfer,
+    background_tasks: BackgroundTasks,
+    current_username: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user = crud.get_user_by_username(db, username=current_username)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    saved_data = crud.create_transfer(db, transfer_data)
+ 
+    # [แก้ไข #1] เปลี่ยนจาก crud.log_action() → background_tasks + log_action_background()
+    background_tasks.add_task(
+        crud.log_action_background,
+        user_id=user.id,
+        action="CREATE",
+        table_name="transfers",
+        record_id=saved_data.id,
+        new_model=saved_data
+    )
+    
+    return {"status": "success", "message": "Transfer data received", "data": saved_data}
+ 
+@app.put("/transfers/{transfer_id}")
+async def update_transfer(
+    transfer_id: int,
+    transfer_update: schemas.TransferUpdate,
+    background_tasks: BackgroundTasks,
+    current_username: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user = crud.get_user_by_username(db, username=current_username)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    db_transfer_old = crud.get_transfer_by_id(db, transfer_id)
+    if db_transfer_old is None:
+        raise HTTPException(status_code=404, detail="Transfer data not found")
+ 
+    old_data = {column.name: getattr(db_transfer_old, column.name) for column in db_transfer_old.__table__.columns}
+    update_data = crud.update_transfer(db, transfer_id, transfer_update)
+ 
+    # [แก้ไข #1] เปลี่ยนจาก crud.log_action() → background_tasks + log_action_background()
+    background_tasks.add_task(
+        crud.log_action_background,
+        user_id=user.id,
+        action="UPDATE",
+        table_name="transfers",
+        record_id=transfer_id,
+        old_model=old_data,
+        new_model=transfer_update.dict(exclude_unset=True)
+    )
+ 
+    return {"status": "success", "message": "Transfer data updated", "data": update_data}
+ 
+@app.delete("/transfers/{transfer_id}")
+async def delete_transfer(
+    transfer_id: int,
+    background_tasks: BackgroundTasks,
+    current_username: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user = crud.get_user_by_username(db, username=current_username)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+ 
+    db_transfer = crud.get_transfer_by_id(db, transfer_id)
+    if db_transfer is None:
+        raise HTTPException(status_code=404, detail="Transfer data not found")
+ 
+    old_data = {column.name: getattr(db_transfer, column.name) for column in db_transfer.__table__.columns}
+    crud.delete_transfer(db, transfer_id)
+ 
+    # [แก้ไข #1] เปลี่ยนจาก crud.log_action() → background_tasks + log_action_background()
+    background_tasks.add_task(
+        crud.log_action_background,
+        user_id=user.id,
+        action="DELETE",
+        table_name="transfers",
+        record_id=transfer_id,
+        old_model=old_data
+    )
+    
+    return {"status": "success", "data": old_data}
+ 
+#===========================================SecurityMeasure=========================================================#
+ 
+@app.get("/security/{ropa_id}")
+async def read_security_by_ropa_id(
+    ropa_id: int,
+    db: Session = Depends(get_db)
+):
+    security = crud.get_security_by_ropa_id(db, ropa_id)
+    if not security:
+        raise HTTPException(status_code=404, detail="Security Measure not found")
+    return {"status": "success", "data": security}
+ 
+@app.post("/security")
+async def create_security(
+    security_data: schemas.SecurityMeasure,
+    background_tasks: BackgroundTasks,
+    current_username: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user = crud.get_user_by_username(db, username=current_username)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    saved_data = crud.create_security(db, security_data)
+ 
+    # [แก้ไข #1] เปลี่ยนจาก crud.log_action() → background_tasks + log_action_background()
+    background_tasks.add_task(
+        crud.log_action_background,
+        user_id=user.id,
+        action="CREATE",
+        table_name="security_measures",
+        record_id=saved_data.id,
+        new_model=saved_data
+    )
+ 
+    return {"status": "success", "message": "Security Measure data received", "data": saved_data}
+ 
+@app.put("/security/{security_id}")
+async def update_security(
+    security_id: int,
+    security_update: schemas.SecurityMeasureUpdate,
+    background_tasks: BackgroundTasks,
+    current_username: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user = crud.get_user_by_username(db, username=current_username)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    db_security_old = crud.get_security_by_id(db, security_id)
+    if not db_security_old:
+        raise HTTPException(status_code=404, detail="Security Measure data not found")
+ 
+    old_data = {column.name: getattr(db_security_old, column.name) for column in db_security_old.__table__.columns}
+    update_data = crud.update_security(db, security_id, security_update)
+ 
+    # [แก้ไข #1] เปลี่ยนจาก crud.log_action() → background_tasks + log_action_background()
+    background_tasks.add_task(
+        crud.log_action_background,
+        user_id=user.id,
+        action="UPDATE",
+        table_name="security_measures",
+        record_id=security_id,
+        old_model=old_data,
+        new_model=security_update.dict(exclude_unset=True)
+    )
+ 
+    return {"status": "success", "message": "Security Measure data updated", "data": update_data}
+ 
+@app.delete("/security/{security_id}")
+async def delete_security(
+    security_id: int,
+    background_tasks: BackgroundTasks,
+    current_username: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user = crud.get_user_by_username(db, username=current_username)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+ 
+    db_security = crud.get_security_by_id(db, security_id)
+    if db_security is None:
+        raise HTTPException(status_code=404, detail="Security Measure data not found")
+ 
+    old_data = {column.name: getattr(db_security, column.name) for column in db_security.__table__.columns}
+    crud.delete_security(db, security_id)
+ 
+    # [แก้ไข #1] เปลี่ยนจาก crud.log_action() → background_tasks + log_action_background()
+    background_tasks.add_task(
+        crud.log_action_background,
+        user_id=user.id,
+        action="DELETE",
+        table_name="security_measures",
+        record_id=security_id,
+        old_model=old_data
+    )
+    
+    return {"status": "success", "data": old_data}
+
 # ===========================================================================
 #                                LOGS & FEEDBACK
 # ===========================================================================
