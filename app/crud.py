@@ -144,6 +144,9 @@ def delete_ropa_record(db: Session, record_id: int):
     if not db_ropa:
         return None
     
+    ropa_dict = {col.name: getattr(db_ropa, col.name) 
+                 for col in db_ropa.__table__.columns}
+    
     db.query(models.Transfer).filter(models.Transfer.ropa_id == record_id).delete()
     db.query(models.SecurityMeasure).filter(models.SecurityMeasure.ropa_id == record_id).delete()
     db.query(models.Feedback).filter(models.Feedback.ropa_id == record_id).delete()
@@ -151,7 +154,7 @@ def delete_ropa_record(db: Session, record_id: int):
     db.delete(db_ropa)
     db.commit()
 
-    return db_ropa
+    return ropa_dict
 
 #========================================================Transfers===========================================================#
 
@@ -230,7 +233,7 @@ def get_logs(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.AuditLog).offset(skip).limit(limit).all()
 
 def get_logs_by_ropa_id(db: Session, ropa_id: int):
-    return db.query(models.AuditLog).filter(models.AuditLog.ropa_id == ropa_id).all()
+    return db.query(models.AuditLog).filter(models.AuditLog.ropa_id == ropa_id, models.AuditLog.table_name == "ropa_record").all()
 
 def create_log(db: Session, log: schemas.AuditLog):
     db_log = models.AuditLog(**log.dict())
@@ -253,8 +256,18 @@ def log_action_background(
             if not model:
                 return None
             if isinstance(model, dict):
-                return model
-            return {column.name: getattr(model, column.name) for column in model.__table__.columns}
+                return {
+                    k: v.isoformat() if hasattr(v, 'isoformat') else v
+                    for k, v in model.items()
+                }
+            return {
+                col.name: (
+                    getattr(model, col.name).isoformat() 
+                    if hasattr(getattr(model, col.name), 'isoformat') 
+                    else getattr(model, col.name)
+                )
+                for col in model.__table__.columns
+            }
 
         old_value = model_to_dict(old_model)
         new_value = model_to_dict(new_model)
