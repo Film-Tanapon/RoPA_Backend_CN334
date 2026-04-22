@@ -483,7 +483,7 @@ async def create_security(
         user_id=user.id,
         action="CREATE",
         table_name="Request",
-        record_id=saved_data.id,
+        record_id=saved_data.ropa_id,
         new_model=saved_data
     )
  
