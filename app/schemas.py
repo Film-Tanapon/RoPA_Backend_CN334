@@ -106,16 +106,13 @@ class AuditLog(BaseModel):
 class Feedback(BaseModel):
     ropa_id: int
     detail: str
-    create_by: int
 
 class Request(BaseModel):
     ropa_id: int
     req_type: str
     status: str
-    create_by: int
 
 class RequestUpdate(BaseModel):
     ropa_id: Optional[int] = None
     req_type: Optional[str] = None
     status: Optional[str] = None
-    create_by: Optional[int] = None

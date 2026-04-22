@@ -297,7 +297,7 @@ def get_feedback_by_id(db: Session, feedback_id: int):
 def get_feedback_by_ropa_id(db: Session, ropa_id: int):
     return db.query(models.Feedback).filter(models.Feedback.ropa_id == ropa_id).all()
 
-def create_feedback(db: Session, log: schemas.Feedback):
+def create_feedback(db: Session, log: schemas.Feedback, user_id: int):
     db_feedback = models.Feedback(**log.dict())
     db.add(db_feedback)
     db.commit()
@@ -319,11 +319,17 @@ def get_request_by_id(db: Session, request_id: int):
 def get_request(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Request).offset(skip).limit(limit).all()
 
-def create_request(db: Session, log: schemas.Request):
-    db_request = models.Request(**log.dict())
+def create_request(db: Session, request: schemas.Request, user_id: int):
+    request_dict = request.dict()
+    db_request = models.Request(
+        **request_dict,
+        create_by=user_id,
+    )
+
     db.add(db_request)
     db.commit()
     db.refresh(db_request)
+    
     return db_request
 
 def update_request(db: Session, request_id: int, request_update: schemas.RequestUpdate):

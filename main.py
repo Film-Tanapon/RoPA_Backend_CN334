@@ -438,7 +438,7 @@ async def read_logs_by_ropa_id(ropa_id: int, db: Session = Depends(get_db)):
     logs = crud.get_logs_by_ropa_id(db, ropa_id)
     return {"status": "success", "data": logs}
 
-@app.get("/feedbacks/{ropa_id}")
+@app.get("/feedback/{ropa_id}")
 async def read_feedback_by_ropa_id(ropa_id: int, db: Session = Depends(get_db)):
     feedbacks = crud.get_feedback_by_ropa_id(db, ropa_id)
     return {"status": "success", "data": feedbacks}
@@ -476,7 +476,7 @@ async def create_requests(
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     
-    saved_data = crud.create_request(db, request_data)
+    saved_data = crud.create_request(db, request_data, user.id)
  
     background_tasks.add_task(
         crud.log_action_background,
