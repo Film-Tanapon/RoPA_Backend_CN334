@@ -33,6 +33,71 @@ def parse_retention_until(retention_start: str, retention_period: str):
 
     return retention_until
 
+def extend_retention_period(db: Session, record_id: int, extend_period: str):
+    """
+    ขยาย retention_until และ retention_period ของ RoPARecord
+    โดยไม่สร้าง record ใหม่ใน database
+    
+    extend_period: เช่น "6 เดือน", "1 ปี"
+    """
+    db_ropa = get_ropa_record_by_id(db, record_id)
+    if not db_ropa:
+        return None
+
+    # Parse extend_period
+    match = re.match(r"(\d+)\s*(เดือน|ปี)", extend_period.strip())
+    if not match:
+        raise ValueError(
+            f"รูปแบบ extend_period ไม่ถูกต้อง: '{extend_period}' (ตัวอย่าง: '6 เดือน', '1 ปี')"
+        )
+
+    amount = int(match.group(1))
+    unit = match.group(2)
+
+    # คำนวณ retention_until ใหม่จากค่าเดิม
+    current_until = db_ropa.retention_until
+    if current_until is None:
+        raise ValueError(f"Record {record_id} ไม่มี retention_until กำหนดไว้")
+
+    if unit == "เดือน":
+        new_until = current_until + relativedelta(months=amount)
+    else:
+        new_until = current_until + relativedelta(years=amount)
+
+    # คำนวณ retention_period รวมใหม่ (นับจาก retention_start ถึง new_until)
+    try:
+        start_date = None
+        for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d"):
+            try:
+                start_date = datetime.strptime(db_ropa.retention_start.strip(), fmt)
+                break
+            except ValueError:
+                continue
+        
+        if start_date is None:
+            raise ValueError(f"ไม่สามารถอ่าน retention_start: '{db_ropa.retention_start}'")
+
+        # Strip timezone info เพื่อให้ compare กับ naive datetime ได้
+        new_until_naive = new_until.replace(tzinfo=None) if new_until.tzinfo else new_until
+        delta = relativedelta(new_until_naive, start_date)
+        total_months = delta.years * 12 + delta.months
+
+        if total_months % 12 == 0:
+            new_period_str = f"{total_months // 12} ปี"
+        else:
+            new_period_str = f"{total_months} เดือน"
+
+    except Exception as e:
+        raise ValueError(f"คำนวณ retention_period ใหม่ไม่ได้: {e}")
+
+    # อัปเดตเฉพาะ 2 field
+    db_ropa.retention_until = new_until
+    db_ropa.retention_period = new_period_str
+
+    db.commit()
+    db.refresh(db_ropa)
+    return db_ropa
+
 #========================================================Users===========================================================#
 def create_user(db: Session, user: schemas.User):
     password = get_password_hash(user.password_hash)
@@ -294,6 +359,9 @@ def log_action_background(
 def get_feedback_by_id(db: Session, feedback_id: int):
     return db.query(models.Feedback).filter(models.Feedback.id == feedback_id).first()
 
+def get_feedback(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Feedback).offset(skip).limit(limit).all()
+
 def get_feedback_by_ropa_id(db: Session, ropa_id: int):
     return db.query(models.Feedback).filter(models.Feedback.ropa_id == ropa_id).all()
 
@@ -310,3 +378,45 @@ def delete_feedback(db: Session, feedback_id: int):
         db.delete(db_feedback)
         db.commit()
     return db_feedback
+
+
+#========================================================REQUEST===========================================================#
+def get_request_by_id(db: Session, request_id: int):
+    return db.query(models.Request).filter(models.Request.id == request_id).first()
+
+def get_request(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Request).offset(skip).limit(limit).all()
+
+def create_request(db: Session, request: schemas.Request, user_id: int):
+    request_dict = request.dict()
+    db_request = models.Request(
+        **request_dict,
+        create_by=user_id,
+    )
+
+    db.add(db_request)
+    db.commit()
+    db.refresh(db_request)
+    
+    return db_request
+
+def update_request(db: Session, request_id: int, request_update: schemas.RequestUpdate):
+    db_request = get_request_by_id(db, request_id)
+    if not db_request:
+        return None
+
+    update_data = request_update.dict(exclude_unset=True)
+
+    for key, value in update_data.items():
+        setattr(db_request, key, value)
+
+    db.commit()
+    db.refresh(db_request)
+    return db_request
+
+def delete(db: Session, request_id: int):
+    db_request = get_request_by_id(db, request_id)
+    if db_request:
+        db.delete(db_request)
+        db.commit()
+    return db_request

@@ -106,4 +106,18 @@ class AuditLog(BaseModel):
 class Feedback(BaseModel):
     ropa_id: int
     detail: str
-    create_by: int
+
+class Request(BaseModel):
+    ropa_id: int
+    req_type: str
+    detail: str
+    status: str
+
+class RequestUpdate(BaseModel):
+    ropa_id: Optional[int] = None
+    req_type: Optional[str] = None
+    detail: Optional[str] = None
+    status: Optional[str] = None
+
+class ExtendRetention(BaseModel):
+    extend_period: str
