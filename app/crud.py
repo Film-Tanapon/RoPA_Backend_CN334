@@ -162,6 +162,8 @@ def delete_user(db: Session, user_id: int):
 
 def create_ropa_record(db: Session, ropa: schemas.RoPARecord, user_id: int):
     record_dict = ropa.dict()
+
+    user = get_user_by_id(db, user_id)
     
     try:
         retention_until = parse_retention_until(
@@ -174,7 +176,8 @@ def create_ropa_record(db: Session, ropa: schemas.RoPARecord, user_id: int):
     db_ropa = models.RoPARecord(
         **record_dict,
         retention_until=retention_until,
-        create_by=user_id
+        create_by=user_id,
+        creator_role=user.role
     )
 
     db.add(db_ropa)

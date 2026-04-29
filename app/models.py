@@ -47,6 +47,7 @@ class RoPARecord(Base):
     status = Column(String)
     create_date = Column(DateTime(timezone=True), server_default=func.now())
     create_by = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    creator_role = Column(String)
 
 class Transfer(Base):
     __tablename__ = "transfers"
