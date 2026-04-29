@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI, HTTPException, status, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
@@ -18,7 +20,7 @@ app = FastAPI(title="RoPA Management API")
 # --- CORS Configuration ---
 origins = [
     "http://localhost:3000",
-    "http://localhost:5500",
+    "https://ro-pa-frontend-cn-334.vercel.app",
 ]
 
 app.add_middleware(
@@ -31,7 +33,7 @@ app.add_middleware(
 
 # --- Security Configuration ---
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-SECRET_KEY = "my_super_secret_key"  # แนะนำให้ใช้ os.getenv("SECRET_KEY") ในภายหลัง
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 2
 
