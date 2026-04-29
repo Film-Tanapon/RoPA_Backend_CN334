@@ -93,7 +93,7 @@ class Request(Base):
     id = Column(Integer, primary_key=True, index=True)
     ropa_id = Column(Integer, ForeignKey("ropa_record.id", ondelete="CASCADE"))
     req_type = Column(String)
-    detail = Column(String)
+    detail = Column(String, nullable=True)
     status= Column(String)
     create_by = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
     create_date = Column(DateTime(timezone=True), server_default=func.now())

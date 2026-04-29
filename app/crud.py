@@ -77,7 +77,9 @@ def extend_retention_period(db: Session, record_id: int, extend_period: str):
         if start_date is None:
             raise ValueError(f"ไม่สามารถอ่าน retention_start: '{db_ropa.retention_start}'")
 
-        delta = relativedelta(new_until, start_date)
+        # Strip timezone info เพื่อให้ compare กับ naive datetime ได้
+        new_until_naive = new_until.replace(tzinfo=None) if new_until.tzinfo else new_until
+        delta = relativedelta(new_until_naive, start_date)
         total_months = delta.years * 12 + delta.months
 
         if total_months % 12 == 0:
