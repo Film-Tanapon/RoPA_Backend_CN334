@@ -398,6 +398,28 @@ async def update_security(
     )
  
     return {"status": "success", "message": "Security Measure data updated", "data": update_data}
+
+@app.patch("/ropa-records/{record_id}/extend-retention")
+async def extend_retention(
+    record_id: int,
+    body: schemas.ExtendRetention,
+    current_username: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        updated = crud.extend_retention_period(db, record_id, body.extend_period)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if not updated:
+        raise HTTPException(status_code=404, detail="Record not found")
+
+    return {
+        "status": "success",
+        "record_id": record_id,
+        "retention_period": updated.retention_period,
+        "retention_until": updated.retention_until
+    }
  
 @app.delete("/security/{security_id}")
 async def delete_security(

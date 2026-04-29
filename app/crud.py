@@ -33,6 +33,69 @@ def parse_retention_until(retention_start: str, retention_period: str):
 
     return retention_until
 
+def extend_retention_period(db: Session, record_id: int, extend_period: str):
+    """
+    ขยาย retention_until และ retention_period ของ RoPARecord
+    โดยไม่สร้าง record ใหม่ใน database
+    
+    extend_period: เช่น "6 เดือน", "1 ปี"
+    """
+    db_ropa = get_ropa_record_by_id(db, record_id)
+    if not db_ropa:
+        return None
+
+    # Parse extend_period
+    match = re.match(r"(\d+)\s*(เดือน|ปี)", extend_period.strip())
+    if not match:
+        raise ValueError(
+            f"รูปแบบ extend_period ไม่ถูกต้อง: '{extend_period}' (ตัวอย่าง: '6 เดือน', '1 ปี')"
+        )
+
+    amount = int(match.group(1))
+    unit = match.group(2)
+
+    # คำนวณ retention_until ใหม่จากค่าเดิม
+    current_until = db_ropa.retention_until
+    if current_until is None:
+        raise ValueError(f"Record {record_id} ไม่มี retention_until กำหนดไว้")
+
+    if unit == "เดือน":
+        new_until = current_until + relativedelta(months=amount)
+    else:
+        new_until = current_until + relativedelta(years=amount)
+
+    # คำนวณ retention_period รวมใหม่ (นับจาก retention_start ถึง new_until)
+    try:
+        start_date = None
+        for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d"):
+            try:
+                start_date = datetime.strptime(db_ropa.retention_start.strip(), fmt)
+                break
+            except ValueError:
+                continue
+        
+        if start_date is None:
+            raise ValueError(f"ไม่สามารถอ่าน retention_start: '{db_ropa.retention_start}'")
+
+        delta = relativedelta(new_until, start_date)
+        total_months = delta.years * 12 + delta.months
+
+        if total_months % 12 == 0:
+            new_period_str = f"{total_months // 12} ปี"
+        else:
+            new_period_str = f"{total_months} เดือน"
+
+    except Exception as e:
+        raise ValueError(f"คำนวณ retention_period ใหม่ไม่ได้: {e}")
+
+    # อัปเดตเฉพาะ 2 field
+    db_ropa.retention_until = new_until
+    db_ropa.retention_period = new_period_str
+
+    db.commit()
+    db.refresh(db_ropa)
+    return db_ropa
+
 #========================================================Users===========================================================#
 def create_user(db: Session, user: schemas.User):
     password = get_password_hash(user.password_hash)
