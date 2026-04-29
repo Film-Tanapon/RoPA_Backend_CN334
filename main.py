@@ -208,6 +208,56 @@ async def update_ropa_record(
     )
     return updated_record
 
+@app.put("/ropa-records/{record_id}/extend-retention")
+async def extend_retention(
+    record_id: int,
+    extend_data: schemas.ExtendRetention,
+    background_tasks: BackgroundTasks,
+    current_username: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user = crud.get_user_by_username(db, current_username)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    try:
+        extended_record = crud.extend_retention_period(db, record_id, extend_data.extend_period)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    background_tasks.add_task(
+        crud.log_action_background,
+        user_id=user.id,
+        action="UPDATE",
+        table_name="ropa_record",
+        record_id=record_id,
+        old_model={column.name: getattr(extended_record, column.name) for column in extended_record.__table__.columns},
+        new_model=extended_record.dict()
+    )
+    return extended_record
+
+@app.patch("/ropa-records/{record_id}/extend-retention")
+async def extend_retention(
+    record_id: int,
+    body: schemas.ExtendRetention,
+    current_username: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        updated = crud.extend_retention_period(db, record_id, body.extend_period)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if not updated:
+        raise HTTPException(status_code=404, detail="Record not found")
+
+    return {
+        "status": "success",
+        "record_id": record_id,
+        "retention_period": updated.retention_period,
+        "retention_until": updated.retention_until
+    }
+
 @app.delete("/ropa-records/{record_id}")
 async def delete_ropa_record(
     record_id: int, 
@@ -398,28 +448,6 @@ async def update_security(
     )
  
     return {"status": "success", "message": "Security Measure data updated", "data": update_data}
-
-@app.patch("/ropa-records/{record_id}/extend-retention")
-async def extend_retention(
-    record_id: int,
-    body: schemas.ExtendRetention,
-    current_username: str = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    try:
-        updated = crud.extend_retention_period(db, record_id, body.extend_period)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    if not updated:
-        raise HTTPException(status_code=404, detail="Record not found")
-
-    return {
-        "status": "success",
-        "record_id": record_id,
-        "retention_period": updated.retention_period,
-        "retention_until": updated.retention_until
-    }
  
 @app.delete("/security/{security_id}")
 async def delete_security(
